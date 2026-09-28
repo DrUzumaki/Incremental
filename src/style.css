@@ -47,3 +47,144 @@ body {
   text-transform: uppercase;
   color: var(--code-blue);
 }
+
+.title-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 48px;
+}
+
+.start-btn {
+  font: inherit;
+  font-size: 1.25rem;
+  font-weight: 700;
+  padding: 14px 36px;
+  border: none;
+  border-radius: 999px;
+  background: var(--code-blue);
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.start-btn:hover {
+  filter: brightness(1.1);
+}
+
+/* Emergency room screen */
+
+.room {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+.room-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.room-name {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.money {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: #46a758;
+  font-variant-numeric: tabular-nums;
+}
+
+.reset-btn {
+  margin-left: auto;
+  font: inherit;
+  font-size: 0.85rem;
+  padding: 6px 12px;
+  border: 1px solid #3a4d68;
+  border-radius: 8px;
+  background: transparent;
+  color: #8ea3bf;
+  cursor: pointer;
+}
+
+.room-body {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 16px;
+  align-items: start;
+}
+
+@media (max-width: 800px) {
+  .room-body {
+    grid-template-columns: 1fr;
+  }
+}
+
+.triage-canvas {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 12px;
+}
+
+.play-hint {
+  margin: 8px 0 0;
+  color: #8ea3bf;
+  font-size: 0.9rem;
+}
+
+.upgrade-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.panel-title {
+  margin: 0 0 4px;
+}
+
+.upgrade {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2px 8px;
+  text-align: left;
+  font: inherit;
+  padding: 10px 12px;
+  border: 1px solid #2c3f5a;
+  border-radius: 10px;
+  background: #16263d;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.upgrade:hover:not(:disabled) {
+  border-color: var(--code-blue);
+}
+
+.upgrade:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
+.upgrade-name {
+  font-weight: 700;
+}
+
+.upgrade-level,
+.upgrade-desc {
+  color: #8ea3bf;
+  font-size: 0.85rem;
+}
+
+.upgrade-level {
+  text-align: right;
+}
+
+.upgrade-cost {
+  font-weight: 700;
+  text-align: right;
+  color: #46a758;
+}

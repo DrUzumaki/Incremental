@@ -1,14 +1,11 @@
-// Entry point. For now this only draws the title screen.
-// Game systems (state, loop, departments) get added in later build steps.
+// Entry point: load the save, show the title screen, then the Emergency room.
 import './style.css'
+import { loadGame, startAutosave } from './core/save'
+import { showEmergencyScreen } from './ui/emergencyScreen'
+import { showTitleScreen } from './ui/titleScreen'
 
 const app = document.querySelector<HTMLDivElement>('#app')!
+const state = loadGame()
+startAutosave(state)
 
-app.innerHTML = `
-  <main class="title-screen">
-    <div class="title-block">
-      <h1 class="title">Resident Life</h1>
-      <p class="subtitle">Code Blue</p>
-    </div>
-  </main>
-`
+showTitleScreen(app, () => showEmergencyScreen(app, state))

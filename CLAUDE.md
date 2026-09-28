@@ -53,6 +53,35 @@ small, and never add features that weren't asked for.
 - Clean flat vector shapes (drawn in code on Canvas or as SVG). No pixel art.
 - One shared soundtrack, with special tracks for events (boss fights, codes).
 
+## Feel and animation ("juice")
+
+- Target feel: Fortune Mill-level spectacle. Money should visibly pour in, and on-screen
+  activity should grow as the numbers grow. Achieve it with flat vector shapes, colour, motion
+  and particles, not pixel art.
+- Every new feature ships with basic feedback: a pop-up, a small tween or a flash. The
+  big showpiece effects (particle storms, screen shake, animated staff) come in step 7.
+- Visual effects never change game rules. They read from the game state, so they can be
+  toned down later (e.g. a "reduce effects" setting) without touching the logic.
+- Effects go through one shared, pooled effects system (particles, pop-ups, shake), built
+  with the game loop in step 3.
+
+## Characters (flat vector, animated, drawn in code)
+
+- Style: simple flat vector bodies built from shapes (rounded head, torso, limbs), animated
+  with code: walk cycles, idle breathing/bob, squash and stretch, facial expressions.
+- The resident (player) stands in a corner of every department, holding a clipboard, and
+  visibly acts out each decision: points to the chosen bay, thumbs-up on a correct call,
+  facepalm on a wrong one, sweat drops as the combo climbs, the odd night-shift yawn.
+- Staff the player hires appear on screen beside the resident and visibly do the work,
+  so automation is something you watch (like Fortune Mill's helpers).
+- Emergency patients:
+  - Walk in from the entrance with a walk cycle and join the queue.
+  - Act out their complaint (clutching chest, limping, holding an arm, sneezing, scratching).
+  - React while waiting: fidget, tap feet, get visibly annoyed as patience runs out.
+  - After sorting, walk to their bay (red/yellow/green); if patience runs out they storm out.
+- Character drawing and animation live in reusable code (e.g. src/ui/characters/), so every
+  department shares one body system with different outfits, poses and props.
+
 ## Pager system
 
 - While in one department, the pager announces a timed event in another (e.g. a code in
@@ -90,6 +119,7 @@ tools/
 
 1. Project setup (Vite + TypeScript, Git).
 2. Emergency prototype with plain shapes: triage minigame, money, 5 upgrades, save/load.
+2b. Character pass: animated resident in the corner and animated Emergency patients (see Characters).
 3. Core systems: game loop, idle staff, offline earnings, upgrade panel.
 4. Cardiology + pager + cross-room exports.
 5. Lungs and Heart trials, then Sepsis.
@@ -97,12 +127,14 @@ tools/
 7. Balancing with the simulator, then art, sound, and polish.
 8. Playtest, then publish on itch.io.
 
-Current step: 2. Step 1 done: Vite + TypeScript project with the title screen, Git initialised.
+Current step: 3. Step 2 done: Emergency triage prototype (triage minigame, dollars, 5 upgrades, save/load, reset button).
 (Update this line as we progress.)
 
 ## How to work in this repo
 
 - Do one step at a time. After each change, tell me how to test it in the browser.
 - Run `npm run dev` to test and `npm run build` before saying something is done.
-- Suggest a Git commit message after each working change.
+- After each working change (once `npm run build` passes), commit it with a clear message
+  and run `git push` to GitHub (origin: github.com/DrUzumaki/Incremental, branch main).
+  Never commit or push code that fails to build. If a push fails, tell me the error.
 - If a request is unclear or conflicts with this file, ask before building.
