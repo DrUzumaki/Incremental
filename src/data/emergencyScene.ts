@@ -43,8 +43,6 @@ export const SCENE = {
 }
 
 export const SCENE_TIMING = {
-  yawnMin: 18, // TUNE: seconds between idle yawns (random in this range)
-  yawnMax: 40,
   messageLife: 2.5, // seconds a joke line stays on screen
   flashLife: 0.15, // bay flash after a sort
   nurseBurstEvery: 2.4, // TUNE: seconds between nurse payouts (shared by visible nurses)

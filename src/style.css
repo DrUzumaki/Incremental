@@ -114,7 +114,7 @@ body {
   position: relative;
 }
 
-.triage-canvas {
+.room-canvas {
   display: block;
   width: 100%;
   aspect-ratio: 16 / 9;
@@ -452,4 +452,63 @@ body {
   background: var(--code-blue);
   color: var(--ink);
   cursor: pointer;
+}
+
+/* Department tabs */
+.dept-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.dept-tab {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  font: inherit;
+  padding: 8px 14px;
+  border-radius: 10px;
+  border: 1px solid #2c3f5a;
+  border-bottom: 3px solid var(--dept);
+  background: #16263d;
+  color: var(--ink);
+  cursor: pointer;
+  text-align: left;
+}
+
+.dept-tab[hidden] {
+  display: none;
+}
+
+.dept-tab.active {
+  background: #22395a;
+  border-color: var(--dept);
+}
+
+.dept-tab.locked {
+  opacity: 0.55;
+  cursor: default;
+  border-bottom-style: dashed;
+}
+
+.tab-name {
+  font-weight: 800;
+  font-size: 0.9rem;
+}
+
+.tab-check {
+  color: #46a758;
+}
+
+.tab-amount {
+  font-size: 0.75rem;
+  color: #8ea3bf;
+  font-variant-numeric: tabular-nums;
+}
+
+.room-canvas[hidden] {
+  display: none;
 }

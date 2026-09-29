@@ -8,15 +8,10 @@ import { EFFECTS } from '../../data/effects'
 import { NURSE_SCRUBS, SCENE, SCENE_COLORS, SCENE_TIMING, SWEAT_AT_COMBO } from '../../data/emergencyScene'
 import { drawCharacter, type Look } from '../../ui/characters/body'
 import { randomPatientLook, RESIDENT_LOOK, staffLook } from '../../ui/characters/looks'
-import {
-  GESTURE_DURATION,
-  patientFrame,
-  residentFrame,
-  type Gesture,
-  type GestureState,
-  type PatientMode,
-} from '../../ui/characters/poses'
+import { ResidentActor, StaffCrew } from '../../ui/characters/actors'
+import { patientFrame, residentFrame, type PatientMode } from '../../ui/characters/poses'
 import type { Effects } from '../../ui/effects'
+import { screenMapper, setupCanvas, type RoomView } from '../../ui/roomKit'
 import type { TriageResult } from './triage'
 
 const { width: W, height: H } = SCENE
@@ -47,13 +42,10 @@ function depthScale(y: number) {
   return 0.62 + 0.38 * (y / SCENE.queueY)
 }
 
-export function mountTriageView(canvas: HTMLCanvasElement, game: Game, fx: Effects) {
+export function mountTriageView(canvas: HTMLCanvasElement, game: Game, fx: Effects): RoomView {
   const triage = game.triage
-  const ctx = canvas.getContext('2d')!
-  const dpr = window.devicePixelRatio || 1
-  canvas.width = W * dpr
-  canvas.height = H * dpr
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+  const ctx = setupCanvas(canvas, W, H)
+  const toScreen = screenMapper(canvas, W, H)
 
   const actors: Actor[] = Array.from({ length: ACTOR_COUNT }, () => ({
     active: false, patientId: 0, look: randomPatientLook(), act: 'note', mode: 'walking',
@@ -65,35 +57,19 @@ export function mountTriageView(canvas: HTMLCanvasElement, game: Game, fx: Effec
   let messageAge = SCENE_TIMING.messageLife
   let flashBay: Severity | null = null
   let flashAge = SCENE_TIMING.flashLife
-  let gesture: GestureState | null = null
-  let reaction: Gesture | null = null // plays after the point finishes
-  let yawnIn = SCENE_TIMING.yawnMin
-
-  // Nurses: idle income piles up here and is paid out visually by one nurse at a time.
+  const resident = new ResidentActor()
+  // Nurses visibly pay out the idle income, one at a time.
   const nurseLooks = SCENE.nurseSpots.map((_, i) => staffLook(NURSE_SCRUBS, i))
-  const nurseGestures: (GestureState | null)[] = SCENE.nurseSpots.map(() => null)
-  let nurseBucket = 0
-  let nurseTimer = 0
-  let nextNurse = 0
+  const nurses = new StaffCrew(SCENE.nurseSpots.length, SCENE_TIMING.nurseBurstEvery)
   game.bus.on('earn', (e) => {
-    if (e.dept === 'emergency' && e.source === 'idle') nurseBucket += e.amount
+    if (e.dept === 'emergency' && e.source === 'idle') nurses.add(e.amount)
   })
-  // The resident cheers at milestones.
   game.bus.on('milestone', (e) => {
-    if (e.dept === 'emergency') {
-      gesture = { kind: 'cheer', age: 0 }
-      reaction = null
-    }
+    if (e.dept === 'emergency') resident.cheer()
   })
 
   function actorFor(id: number) {
     return actors.find((a) => a.active && a.patientId === id)
-  }
-
-  // Canvas coordinates to screen coordinates, for the shared effects layer.
-  function toScreen(x: number, y: number) {
-    const r = canvas.getBoundingClientRect()
-    return { x: r.left + (x / W) * r.width, y: r.top + (y / H) * r.height }
   }
 
   // The payoff moment: cash bursts out of the sorted patient and flies to the counter.
@@ -166,12 +142,12 @@ export function mountTriageView(canvas: HTMLCanvasElement, game: Game, fx: Effec
     }
     sendToBay(frontId, choice!)
     const bay = SCENE.bays.find((b) => b.severity === choice)!
-    gesture = { kind: 'point', age: 0, pointAngle: bay.pointAngle }
+    const point = { kind: 'point' as const, age: 0, pointAngle: bay.pointAngle }
     if (result.kind === 'correct') {
-      reaction = 'thumbsUp'
+      resident.play(point, 'thumbsUp')
       payoff(result.pay)
     } else {
-      reaction = 'facepalm'
+      resident.play(point, 'facepalm')
       message = result.message
       messageAge = 0
       comboLost(result.lostCombo)
@@ -208,7 +184,7 @@ export function mountTriageView(canvas: HTMLCanvasElement, game: Game, fx: Effec
     canvas.style.cursor = bayAt(x, y) ? 'pointer' : 'default'
   })
   window.addEventListener('keydown', (e) => {
-    if (!canvas.offsetParent) return // room not on screen
+    if (!canvas.offsetParent || game.viewing !== 'emergency') return // room not on screen
     const bay = SCENE.bays.find((b) => b.key === e.key)
     if (bay && !e.repeat) sort(bay.severity)
   })
@@ -246,41 +222,10 @@ export function mountTriageView(canvas: HTMLCanvasElement, game: Game, fx: Effec
     return Math.min(SCENE.nurseSpots.length, game.stats('emergency').nurses)
   }
 
-  function updateNurses(dt: number) {
-    for (let i = 0; i < nurseGestures.length; i++) {
-      const g = nurseGestures[i]
-      if (!g) continue
-      g.age += dt
-      if (g.age >= GESTURE_DURATION[g.kind]) nurseGestures[i] = null
-    }
-    const n = visibleNurses()
-    if (n === 0) return
-    nurseTimer -= dt
-    if (nurseTimer > 0 || nurseBucket <= 0) return
-    nurseTimer = SCENE_TIMING.nurseBurstEvery / n
-    const i = nextNurse % n
-    nextNurse++
-    nurseGestures[i] = { kind: 'point', age: 0, pointAngle: 1.7 }
+  function nurseBurst(i: number, amount: number) {
     const tier = intensityFor(game, 'emergency')
     const at = toScreen(SCENE.nurseSpots[i] + 14, SCENE.nurseY - 50)
-    fx.money(at.x, at.y, nurseBucket, Math.max(1, Math.ceil(EFFECTS.burstCount[tier - 1] / 2)))
-    nurseBucket = 0
-  }
-
-  function updateResident(dt: number) {
-    if (gesture) {
-      gesture.age += dt
-      if (gesture.age >= GESTURE_DURATION[gesture.kind]) {
-        gesture = reaction ? { kind: reaction, age: 0 } : null
-        reaction = null
-      }
-    } else {
-      yawnIn -= dt
-      if (yawnIn <= 0) {
-        gesture = { kind: 'yawn', age: 0 }
-        yawnIn = SCENE_TIMING.yawnMin + Math.random() * (SCENE_TIMING.yawnMax - SCENE_TIMING.yawnMin)
-      }
-    }
+    fx.money(at.x, at.y, amount, Math.max(1, Math.ceil(EFFECTS.burstCount[tier - 1] / 2)))
   }
 
   // --- Drawing ---
@@ -323,7 +268,7 @@ export function mountTriageView(canvas: HTMLCanvasElement, game: Game, fx: Effec
   function drawNurses() {
     const n = visibleNurses()
     for (let i = 0; i < n; i++) {
-      const frame = residentFrame(time + i * 1.3, nurseGestures[i], 0)
+      const frame = residentFrame(time + i * 1.3, nurses.gestures[i], 0)
       frame.props = ['stethoscope']
       frame.face.tired = false
       drawCharacter(ctx, SCENE.nurseSpots[i], SCENE.nurseY, SCENE.nurseSize, 1, nurseLooks[i], frame)
@@ -466,8 +411,8 @@ export function mountTriageView(canvas: HTMLCanvasElement, game: Game, fx: Effec
       time += dt
       syncQueue()
       updateActors(dt)
-      updateResident(dt)
-      updateNurses(dt)
+      resident.update(dt)
+      nurses.update(dt, visibleNurses(), nurseBurst)
       messageAge += dt
       flashAge += dt
     },
@@ -478,7 +423,7 @@ export function mountTriageView(canvas: HTMLCanvasElement, game: Game, fx: Effec
       drawBays()
       drawActors(showHint)
       const r = SCENE.resident
-      drawCharacter(ctx, r.x, r.y, r.size, 1, RESIDENT_LOOK, residentFrame(time, gesture, sweatLevel()))
+      drawCharacter(ctx, r.x, r.y, r.size, 1, RESIDENT_LOOK, residentFrame(time, resident.gesture, sweatLevel()))
       drawBubble()
       drawHud()
     },

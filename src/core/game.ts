@@ -1,6 +1,6 @@
 // The game: owns the state and every department's rules, and advances them over time.
 // Knows nothing about drawing; the screen listens to `bus` events.
-import { DEPT_ORDER, type DeptId } from '../data/departments'
+import { DEPT_ORDER, DEPTS, type DeptId } from '../data/departments'
 import { ECONOMY } from '../data/economy'
 import type { TreeId } from '../data/tree'
 import { Triage } from '../departments/emergency/triage'
@@ -20,6 +20,11 @@ export class Game {
 
   constructor(state: GameState) {
     this.state = state
+    // Keep unlocks consistent with sign-offs (e.g. after loading an older save).
+    for (const id of DEPT_ORDER) {
+      const after = DEPTS[id].unlockAfter
+      if (after && state.depts[after].signedOff) state.depts[id].unlocked = true
+    }
     this.triage = new Triage({
       stats: () => this.stats('emergency'),
       earn: (amount) => this.earn('emergency', amount, 'active'),
@@ -90,6 +95,12 @@ export class Game {
     if (!d.signedOff && d.lifetime >= ECONOMY.signOff) {
       d.signedOff = true
       this.bus.emit('signOff', { dept })
+      for (const id of DEPT_ORDER) {
+        if (DEPTS[id].unlockAfter === dept && !this.state.depts[id].unlocked) {
+          this.state.depts[id].unlocked = true
+          this.bus.emit('unlock', { dept: id })
+        }
+      }
     }
   }
 

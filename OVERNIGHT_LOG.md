@@ -4,6 +4,27 @@
 
 _Summary goes here at the end of the run._
 
+### Commit: Step 4a, department tabs and room framework
+- **Built:**
+  - Department tabs above the room: each unlocked department shows its name, currency,
+    a ✓ once signed off, and a "!" badge when its skill tree has something affordable.
+    The next locked department is shown greyed out with its goal and progress
+    ("🔒 Emergency sign-off (37%)").
+  - Rooms: each department has its own canvas, created the first time you open it; only the
+    room you're viewing runs its minigame, all rooms keep earning idle income.
+  - Unlocking: a department unlocks when the previous one gets its 1,000,000 sign-off
+    (toast: "Cardiology is now open!").
+  - Shared room parts (`src/ui/characters/actors.ts`, `src/ui/roomKit.ts`): the resident's
+    gesture logic and a "staff crew" that pays idle income out visually, so every room
+    reuses them. The skill tree follows the room you switch to.
+  - The side panel is gone, so the room is now full width.
+- **Test:** the Cardiology tab appears greyed with your Emergency progress.
+- **Assumptions:**
+  - Unlock order and rule: `unlockAfter` in `src/data/departments.ts` (each department opens
+    at the previous one's sign-off). This makes the run sequential, ~30 min per room.
+  - Each room's how-to-play hint text is also in `src/data/departments.ts`.
+- **Open questions:** should later departments unlock earlier (e.g. at 100K) so rooms overlap more?
+
 ### Commit: Step 3d, idle nurses on screen, offline earnings, milestone celebrations
 - **Built:**
   - Hired nurses appear behind a Nurse Station next to the resident (up to 4 shown, then

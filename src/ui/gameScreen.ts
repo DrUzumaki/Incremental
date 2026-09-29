@@ -1,33 +1,57 @@
-// Builds the in-game screen (top bar, room, skill tree) and wires it to the game loop.
+// Builds the in-game screen (top bar, department tabs, rooms, skill tree)
+// and wires it to the game loop.
 import type { Game } from '../core/game'
 import { startLoop } from '../core/loop'
-import { mountTriageView } from '../departments/emergency/triageView'
+import { DEPTS, type DeptId } from '../data/departments'
 import { showOfflineSummary, wireCelebrations } from './celebrations'
 import { createEffects } from './effects'
 import { createHud } from './hud'
+import { toast } from './overlays'
+import type { RoomView } from './roomKit'
+import { ROOMS } from './rooms'
 import { createSkillTree } from './skillTree'
+import { createTabs } from './tabs'
 
 export function showGameScreen(app: HTMLElement, game: Game): void {
   app.innerHTML = `
     <div class="room">
       <header class="room-header"></header>
+      <nav class="dept-tabs"></nav>
       <div class="room-body">
-        <div class="play-area">
-          <canvas class="triage-canvas"></canvas>
-          <p class="play-hint">Read the complaint, then click a bay or press 1 / 2 / 3. Press T for the skill tree.</p>
-        </div>
+        <div class="play-area"></div>
+        <p class="play-hint"></p>
       </div>
     </div>
   `
   const fx = createEffects(game.state.settings)
   wireCelebrations(game, fx)
   const body = app.querySelector<HTMLDivElement>('.room-body')!
+  const playArea = app.querySelector<HTMLDivElement>('.play-area')!
+  const hint = app.querySelector<HTMLParagraphElement>('.play-hint')!
   const tree = createSkillTree(body, game, fx)
   const hud = createHud(app.querySelector('.room-header')!, game, () => tree.toggle(game.viewing))
-  const view = mountTriageView(app.querySelector('.triage-canvas')!, game, fx)
   fx.setMoneyTarget(hud.target)
-  fx.setShakeTarget(app.querySelector('.play-area')!)
-  let bumpCooldown = 0
+  fx.setShakeTarget(playArea)
+
+  // Each room gets its own canvas, created the first time it's shown.
+  const rooms: Partial<Record<DeptId, { canvas: HTMLCanvasElement; view: RoomView }>> = {}
+  function switchTo(dept: DeptId) {
+    game.viewing = dept
+    let room = rooms[dept]
+    if (!room) {
+      const canvas = document.createElement('canvas')
+      canvas.className = 'room-canvas'
+      playArea.appendChild(canvas)
+      room = rooms[dept] = { canvas, view: ROOMS[dept](canvas, game, fx) }
+    }
+    for (const r of Object.values(rooms)) r.canvas.hidden = r !== room
+    hint.textContent = DEPTS[dept].hint
+    if (tree.isOpen()) tree.open(dept)
+  }
+  const tabs = createTabs(app.querySelector('.dept-tabs')!, game, switchTo)
+  switchTo(game.viewing)
+
+  game.bus.on('unlock', ({ dept }) => toast(`${DEPTS[dept].name} is now open! Check the new tab.`, 'big', 6))
 
   window.addEventListener('keydown', (e) => {
     if (e.key === 't' || e.key === 'T') tree.toggle(game.viewing)
@@ -36,10 +60,13 @@ export function showGameScreen(app: HTMLElement, game: Game): void {
   // A long pause while open (e.g. the laptop slept) pays out like offline time.
   const onOffline = (seconds: number) => showOfflineSummary(game.applyOffline(seconds))
 
+  let bumpCooldown = 0
   startLoop(game, onOffline, (dt) => {
-    view.update(dt)
-    view.draw()
+    const room = rooms[game.viewing]!
+    room.view.update(dt)
+    room.view.draw()
     hud.update(dt)
+    tabs.update()
     tree.draw(dt)
     fx.update(dt)
     bumpCooldown -= dt
