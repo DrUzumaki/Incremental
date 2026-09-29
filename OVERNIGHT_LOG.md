@@ -4,6 +4,16 @@
 
 _Summary goes here at the end of the run._
 
+### Commit: Step 7d, polish: unlock announcements, audio pausing, phone layout
+- **Built:**
+  - Toasts announce when a department's organ trial opens, when Sepsis unlocks (Cardiology
+    sign-off) and when Code Blue unlocks (Surgery sign-off).
+  - Sound pauses while the tab is hidden (music would otherwise stutter) and resumes after.
+  - The top bar wraps on narrow (phone) screens instead of pushing buttons off-screen.
+- **Test:** narrow the browser window; the Skill tree / Trials / Settings buttons wrap below.
+- **Assumptions:** none new.
+- **Open questions:** none.
+
 ### Commit: Step 7c, escalation tiers and per-currency art
 - **Built:**
   - Each currency now flies to the counter as its own art: Dollars = coins/bills/cash

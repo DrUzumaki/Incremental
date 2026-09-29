@@ -1,8 +1,10 @@
 // Offline summaries and milestone / sign-off celebrations.
 import { formatCurrency } from '../core/format'
 import type { Game } from '../core/game'
-import { DEPTS, type DeptId } from '../data/departments'
+import { DEPT_ORDER, DEPTS, type DeptId } from '../data/departments'
 import { ECONOMY } from '../data/economy'
+import { ORGAN_OF, TRIALS } from '../data/trials'
+import { ORGAN_GAMES } from '../trials/organs'
 import type { Effects } from './effects'
 import { formatDuration, modal, toast } from './overlays'
 
@@ -25,6 +27,8 @@ function confettiShower(fx: Effects) {
 }
 
 export function wireCelebrations(game: Game, fx: Effects) {
+  // Trials already open when the game loads don't get announced again.
+  const announced = new Set(DEPT_ORDER.filter((d) => game.state.depts[d].lifetime >= TRIALS.unlockAt))
   game.bus.on('milestone', ({ dept, value }) => {
     if (value >= ECONOMY.signOff) return // the sign-off gets its own, bigger moment
     const first = value === ECONOMY.milestones[0]
@@ -37,5 +41,14 @@ export function wireCelebrations(game: Game, fx: Effects) {
     confettiShower(fx)
     setTimeout(() => confettiShower(fx), 500)
     fx.shake(6)
+    if (dept === 'cardiology') setTimeout(() => toast('Boss unlocked: Sepsis! Find it under Trials.', 'big', 6), 1500)
+    if (dept === 'surgery') setTimeout(() => toast('Final boss unlocked: CODE BLUE! Find it under Trials.', 'big', 8), 1500)
+  })
+  // Tell the player when a department's organ trial opens.
+  game.bus.on('earn', ({ dept }) => {
+    const d = game.state.depts[dept]
+    if (d.lifetime < TRIALS.unlockAt || announced.has(dept)) return
+    announced.add(dept)
+    toast(`${ORGAN_GAMES[ORGAN_OF[dept]].name} trial is open! Check Trials.`, 'info', 5)
   })
 }

@@ -43,6 +43,15 @@ export function createAudio(settings: Settings) {
   }
   // Start on the first interaction (browser autoplay rules).
   for (const ev of ['pointerdown', 'keydown']) window.addEventListener(ev, start, { once: false, capture: true })
+  // Pause sound while the tab is hidden (timers slow down there, so music would stutter).
+  document.addEventListener('visibilitychange', () => {
+    if (!ctx) return
+    if (document.hidden) void ctx.suspend()
+    else {
+      void ctx.resume()
+      nextBeat = ctx.currentTime + 0.1
+    }
+  })
 
   function applySettings() {
     if (!ctx) return
