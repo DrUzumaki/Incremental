@@ -76,7 +76,7 @@ export function createTrialsPanel(
   function startTrial(dept: DeptId) {
     const organ = ORGAN_OF[dept]
     const minigame = ORGAN_GAMES[organ]
-    if (!minigame || trialStatus(game, dept).kind !== 'ready') return
+    if (trialStatus(game, dept).kind !== 'ready') return
     const tier = game.state.depts[dept].trialClears
     const difficulty = Math.max(0, tier - (game.stats(dept).trialEase ?? 0))
     const session = organSession(minigame, difficulty, trialDuration(tier), `${minigame.name} trial · Tier ${tier + 1}`)
@@ -108,12 +108,11 @@ export function createTrialsPanel(
   function trialCard(dept: DeptId): string {
     const d = game.state.depts[dept]
     const organ = ORGAN_OF[dept]
-    const name = ORGAN_GAMES[organ]?.name ?? DEPTS[dept].organ
+    const name = ORGAN_GAMES[organ].name
     const st = trialStatus(game, dept)
     let body = ''
     if (!d.unlocked) body = `<p class="muted">Opens with ${DEPTS[dept].name}.</p>`
     else if (st.kind === 'locked') body = `<p class="muted">Earn ${formatCurrency(dept, st.needs)} more in ${DEPTS[dept].name} to open.</p>`
-    else if (!ORGAN_GAMES[organ]) body = `<p class="muted">Still being scrubbed in.</p>`
     else if (st.kind === 'cooldown') body = `<p class="muted">Ready in ${formatDuration(st.secondsLeft)}</p>`
     else {
       const r = trialReward(game, dept)
@@ -146,7 +145,7 @@ export function createTrialsPanel(
     for (const dept of DEPT_ORDER) {
       const el = svg.querySelector(`.organ-${ORGAN_OF[dept]}`)!
       const st = trialStatus(game, dept)
-      el.classList.toggle('ready', st.kind === 'ready' && !!ORGAN_GAMES[ORGAN_OF[dept]])
+      el.classList.toggle('ready', st.kind === 'ready')
       el.classList.toggle('cooldown', st.kind === 'cooldown')
     }
   }
@@ -169,7 +168,7 @@ export function createTrialsPanel(
     },
     // True if any trial can be started (for the button badge).
     anyReady(): boolean {
-      return DEPT_ORDER.some((d) => trialStatus(game, d).kind === 'ready' && !!ORGAN_GAMES[ORGAN_OF[d]])
+      return DEPT_ORDER.some((d) => trialStatus(game, d).kind === 'ready')
     },
     update(dt: number) {
       if (overlay.hidden) return

@@ -2,6 +2,8 @@
 // Run with: npm run check:trials
 // "perfect" reacts instantly; "human" reacts 0.25 s late and is a bit sloppy.
 import { AV_NODE, HeartLogic } from '../src/trials/heart'
+import { GutLogic } from '../src/trials/gut'
+import { LIVER_Y, LiverLogic } from '../src/trials/liver'
 import { LungsLogic } from '../src/trials/lungs'
 import type { OrganLogic } from '../src/trials/types'
 import { trialDuration } from '../src/core/trials'
@@ -56,7 +58,53 @@ function heartBot(every: number, delay: number, aimError: number): () => Bot {
   }
 }
 
+// Moves the liver under the lowest toxin (at a limited speed), dodging nutrients when it can.
+function liverBot(speed: number, delay: number): () => Bot {
+  return () => {
+    let target = 400
+    let lastPick = -1
+    return (logic, t) => {
+      const l = logic as LiverLogic
+      if (t - lastPick >= delay) {
+        lastPick = t
+        const toxins = l.drops.filter((d) => d.active && d.toxin && d.y < LIVER_Y).sort((a, b) => b.y - a.y)
+        target = toxins.length ? toxins[0].x : l.x
+        // Dodge a nutrient that's about to land on the target spot.
+        const half = 80
+        const danger = l.drops.find((d) => d.active && !d.toxin && d.y > LIVER_Y - 90 && d.y < LIVER_Y && Math.abs(d.x - target) < half)
+        if (danger) target = danger.x + (target >= danger.x ? half : -half)
+      }
+      const step = speed * DT
+      l.moveTo(l.x + Math.max(-step, Math.min(step, target - l.x)))
+    }
+  }
+}
+
+// Clicks the bad bacterium nearest the gut's start every `every` seconds.
+function gutBot(every: number, aimError: number): () => Bot {
+  return () => {
+    let next = 0
+    return (logic, t) => {
+      if (t < next) return
+      next = t + every
+      const g = logic as GutLogic
+      const bad = g.bugs.find((b) => b.active && b.bad)
+      if (bad) g.zap(bad.x + (Math.random() - 0.5) * aimError, bad.y + (Math.random() - 0.5) * aimError)
+    }
+  }
+}
+
 const CHECKS: OrganCheck[] = [
+  {
+    name: 'Liver',
+    make: (d) => new LiverLogic(d),
+    bots: { perfect: liverBot(900, 0), human: liverBot(500, 0.2) },
+  },
+  {
+    name: 'Gut',
+    make: (d) => new GutLogic(d),
+    bots: { perfect: gutBot(0.2, 0), human: gutBot(0.4, 24) },
+  },
   {
     name: 'Heart',
     make: (d) => new HeartLogic(d),

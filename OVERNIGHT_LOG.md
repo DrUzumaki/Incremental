@@ -4,6 +4,21 @@
 
 _Summary goes here at the end of the run._
 
+### Commit: Step 6c, Liver and Gut trials (all four organ trials playable)
+- **Built:**
+  - Liver trial (Pharmacy): purple spiky toxins and green nutrients fall; move the liver with
+    the mouse or arrow keys to catch toxins and let nutrients pass. Missed toxins and caught
+    nutrients do damage (7 allowed).
+  - Gut trial (Surgery): bacteria live along a winding gut. Red spiky ones split every few
+    seconds; click them. Zapping a green (good) one just makes room for a bad one. Lose if
+    14 bad bacteria are present.
+  - `npm run check:trials` now covers all four organs.
+- **Test:** Trials panel once Pharmacy / Surgery are open with 25K lifetime.
+- **Assumptions:** difficulty numbers in `src/data/trials.ts` (LIVER, GUT). I tuned Liver
+  after the bot check showed even a perfect bot only won 38% of tier 1 (now slower, wider
+  liver, more toxins, 7 damage allowed): human-like bot ~83% at tier 1.
+- **Open questions:** none.
+
 ### Commit: Step 6b, Surgery room (trace incisions, surgical residents, robot, permanent perks)
 - **Built:**
   - Surgery minigame: a curved dotted incision line on draped skin. Press on the pulsing green

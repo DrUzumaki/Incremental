@@ -51,14 +51,14 @@ export const HEART = {
 
 // Liver: move the liver to catch toxins, let nutrients pass.
 export const LIVER = {
-  spawnEvery: 0.9,
+  spawnEvery: 1.15, // seconds between drops (per tier: - spawnFaster, down to minSpawn)
   spawnFaster: 0.06,
-  minSpawn: 0.32,
-  fallSpeed: 120,
-  fallSpeedUp: 14,
-  toxinChance: 0.6,
-  maxDamage: 5, // missed toxins + caught nutrients before the trial is lost
-  paddleWidth: 120,
+  minSpawn: 0.4,
+  fallSpeed: 88, // pixels per second (per tier: + fallSpeedUp)
+  fallSpeedUp: 10,
+  toxinChance: 0.72,
+  maxDamage: 7, // missed toxins + caught nutrients before the trial is lost
+  paddleWidth: 150,
 }
 
 // Gut: zap bad bacteria before they take over.
