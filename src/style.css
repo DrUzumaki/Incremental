@@ -829,3 +829,14 @@ body {
   color: #1b1b1b;
   cursor: pointer;
 }
+
+.ending-stats {
+  display: grid;
+  gap: 4px;
+  margin: 12px 0;
+  padding: 12px;
+  border-radius: 10px;
+  background: #0f1b2d;
+  font-size: 0.9rem;
+  text-align: left;
+}

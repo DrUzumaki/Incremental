@@ -4,6 +4,30 @@
 
 _Summary goes here at the end of the run._
 
+### Commit: Step 6d, Code Blue finale and the discharge ending (step 6 complete)
+- **Built:**
+  - Code Blue boss (unlocks with Surgery's sign-off): all four organ minigames in rotation
+    (Lungs → Heart → Liver → Gut → …), each stage shorter and harder, with a
+    "CODE BLUE · STAGE 3/12 · LIVER!" banner between stages. Failing ends the run; every new
+    best stage pays Publications.
+  - Surviving stage 12 with all four sign-offs discharges the resident: confetti and a
+    "DISCHARGED! You survived the night shift." screen with stats (shift length, earnings per
+    room, trials, Publications, best boss stages). "Keep playing" returns to the hospital.
+  - Each department's "plays one tier easier" trial research also makes its organ easier in
+    Code Blue, so upgrades matter for the finale.
+  - `npm run check:trials` also plays whole Code Blue runs.
+- **Test:** needs Surgery's sign-off. Dev: sign everything off in the console
+  (`for (const d of ['emergency','cardiology','pharmacy','surgery']) __rl.state.depts[d].signedOff = true`)
+  then Trials → Code Blue → Fight.
+- **Assumptions:**
+  - "Reach the final stage" = survive stage 12 (`BOSSES.codeBlue.finalStage`).
+  - Difficulty ramp `difficultyPerStage: 0.9` (TUNE). Bot check: human-like bots with no
+    research average 8 stages and are never discharged; with maxed ease research (3 per
+    organ) they're discharged every time.
+  - After discharge the game continues; there's no reset/prestige.
+- **Open questions:** is "needs research to win" the right finale feel, or should a skilled
+  player be able to win without it?
+
 ### Commit: Step 6c, Liver and Gut trials (all four organ trials playable)
 - **Built:**
   - Liver trial (Pharmacy): purple spiky toxins and green nutrients fall; move the liver with

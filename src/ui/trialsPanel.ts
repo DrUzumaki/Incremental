@@ -102,7 +102,7 @@ export function createTrialsPanel(
     runSession(run.session, () => {
       game.inTrial = false
       return run.summary()
-    })
+    }).then((won) => run.after?.(won))
   }
 
   function trialCard(dept: DeptId): string {

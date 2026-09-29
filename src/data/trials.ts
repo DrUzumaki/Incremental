@@ -89,6 +89,7 @@ export const BOSSES = {
     stageDuration: 14, // seconds per stage at stage 1 (per stage: - durationDrop)
     durationDrop: 0.4,
     minDuration: 8,
+    difficultyPerStage: 0.9, // TUNE: organ difficulty = stage x this, minus that organ's trial-ease research
     pubsPerStage: 3,
     pubsGrowth: 1.35,
   },

@@ -7,6 +7,8 @@ import { LIVER_Y, LiverLogic } from '../src/trials/liver'
 import { LungsLogic } from '../src/trials/lungs'
 import type { OrganLogic } from '../src/trials/types'
 import { trialDuration } from '../src/core/trials'
+import { codeBlueRun } from '../src/trials/bossSessions'
+import type { OrganId } from '../src/data/trials'
 
 type Bot = (logic: OrganLogic, t: number) => void
 
@@ -145,4 +147,41 @@ for (const check of CHECKS) {
     }
     console.log(`  ${botName.padEnd(8)} ${row.join('  ')}`)
   }
+}
+
+// Code Blue: play whole runs with each organ's human-like bot, with no research and
+// with maxed trial-ease research (3 per organ).
+const HUMAN: Record<OrganId, () => Bot> = {
+  lungs: lungsBot(0.25, 0.15),
+  heart: heartBot(0.4, 0.15, 30),
+  liver: liverBot(500, 0.2),
+  gut: gutBot(0.4, 24),
+}
+const CB_RUNS = 40
+for (const ease of [0, 3]) {
+  let totalStages = 0
+  let wins = 0
+  for (let run = 0; run < CB_RUNS; run++) {
+    const cb = codeBlueRun(() => 0, () => ease)
+    let organ = cb.current().organ
+    let logic = cb.current().logic
+    let bot = HUMAN[organ]()
+    let t = 0
+    while (!cb.session.done() && t < 600) {
+      const cur = cb.current()
+      if (cur.logic !== logic) {
+        organ = cur.organ
+        logic = cur.logic
+        bot = HUMAN[organ]()
+      }
+      bot(cur.logic, t)
+      cb.session.update(DT)
+      t += DT
+    }
+    const won = cb.won()
+    if (won) wins++
+    const stage = Number(cb.session.hud().label.split('/')[0].replace('Stage ', ''))
+    totalStages += won ? stage : stage - 1
+  }
+  console.log(`\nCode Blue, trial-ease ${ease} (human-like bots, ${CB_RUNS} runs): average stages cleared ${(totalStages / CB_RUNS).toFixed(1)}, discharged ${Math.round((wins / CB_RUNS) * 100)}%`)
 }

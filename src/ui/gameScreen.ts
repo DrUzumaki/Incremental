@@ -4,10 +4,12 @@ import type { Game } from '../core/game'
 import { anyAffordable } from '../core/tree'
 import { bossStageReached } from '../core/trials'
 import { startLoop } from '../core/loop'
-import { DEPTS, type DeptId } from '../data/departments'
-import { sepsisRun } from '../trials/bossSessions'
+import { DEPT_ORDER, DEPTS, type DeptId } from '../data/departments'
+import { ORGAN_OF, type OrganId } from '../data/trials'
+import { codeBlueRun, sepsisRun } from '../trials/bossSessions'
 import { showOfflineSummary, wireCelebrations } from './celebrations'
 import { createEffects } from './effects'
+import { showDischarge } from './ending'
 import { createHud } from './hud'
 import { toast } from './overlays'
 import { createPagerUi } from './pager'
@@ -16,6 +18,9 @@ import { ROOMS } from './rooms'
 import { createSkillTree } from './skillTree'
 import { createTabs } from './tabs'
 import { createTrialsPanel } from './trialsPanel'
+
+// Which department each organ belongs to (for its research bonuses in Code Blue).
+const DEPT_OF_ORGAN = Object.fromEntries(DEPT_ORDER.map((d) => [ORGAN_OF[d], d])) as Record<OrganId, DeptId>
 
 export function showGameScreen(app: HTMLElement, game: Game): void {
   app.innerHTML = `
@@ -40,7 +45,14 @@ export function showGameScreen(app: HTMLElement, game: Game): void {
     if (pubs > 0) toast(`New best stage! +${pubs} Publications`, 'big', 3)
     return pubs
   }
-  const trials = createTrialsPanel(body, game, fx, { sepsis: () => sepsisRun(payStage('sepsis')) }, () => tree.open('publications'))
+  const bosses = {
+    sepsis: () => sepsisRun(payStage('sepsis')),
+    codeBlue: () => ({
+      ...codeBlueRun(payStage('codeBlue'), (organ) => game.stats(DEPT_OF_ORGAN[organ]).trialEase ?? 0),
+      after: (won: boolean) => won && showDischarge(game, fx),
+    }),
+  }
+  const trials = createTrialsPanel(body, game, fx, bosses, () => tree.open('publications'))
   const hud = createHud(app.querySelector('.room-header')!, game, {
     onTree: () => {
       trials.close()
