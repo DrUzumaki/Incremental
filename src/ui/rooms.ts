@@ -1,6 +1,7 @@
 // Every department's room view, and small helpers the views share.
 import type { Game } from '../core/game'
 import type { DeptId } from '../data/departments'
+import { mountEcgView } from '../departments/cardiology/ecgView'
 import { mountTriageView } from '../departments/emergency/triageView'
 import type { Effects } from './effects'
 import { setupCanvas, type RoomView } from './roomKit'
@@ -25,7 +26,7 @@ const placeholder: Mount = (canvas) => {
 
 export const ROOMS: Record<DeptId, Mount> = {
   emergency: mountTriageView,
-  cardiology: placeholder,
+  cardiology: mountEcgView,
   pharmacy: placeholder,
   surgery: placeholder,
 }

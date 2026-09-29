@@ -2,6 +2,7 @@
 // without knowing anything about the screen. Views and effects listen.
 import type { DeptId } from '../data/departments'
 import type { Severity } from '../data/emergency'
+import type { EcgResult } from '../departments/cardiology/ecg'
 import type { TriageResult } from '../departments/emergency/triage'
 
 export type EarnSource = 'active' | 'idle' | 'offline' | 'bonus'
@@ -12,6 +13,7 @@ export interface GameEvents {
   signOff: { dept: DeptId }
   unlock: { dept: DeptId }
   triage: { result: TriageResult; patientId: number; choice?: Severity }
+  ecg: EcgResult
   purchase: { tree: string; node: string }
 }
 

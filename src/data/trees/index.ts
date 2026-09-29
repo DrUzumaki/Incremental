@@ -1,5 +1,6 @@
 // All skill trees, looked up by id.
 import type { TreeDef, TreeId } from '../tree'
+import { CARDIOLOGY_TREE } from './cardiology'
 import { EMERGENCY_TREE } from './emergency'
 
 // Departments without a tree yet get a root-only placeholder.
@@ -11,7 +12,7 @@ const placeholder = (id: TreeId): TreeDef => ({
 
 export const TREES: Record<TreeId, TreeDef> = {
   emergency: EMERGENCY_TREE,
-  cardiology: placeholder('cardiology'),
+  cardiology: CARDIOLOGY_TREE,
   pharmacy: placeholder('pharmacy'),
   surgery: placeholder('surgery'),
   publications: placeholder('publications'),

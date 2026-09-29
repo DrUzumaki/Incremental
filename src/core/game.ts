@@ -3,15 +3,18 @@
 import { DEPT_ORDER, DEPTS, type DeptId } from '../data/departments'
 import { ECONOMY } from '../data/economy'
 import type { TreeId } from '../data/tree'
+import { TREES } from '../data/trees'
+import { Ecg } from '../departments/cardiology/ecg'
 import { Triage } from '../departments/emergency/triage'
 import { EventBus, type EarnSource } from './events'
-import type { GameState } from './state'
+import { treeLevels, type GameState } from './state'
 import { buyNode, computeStats } from './tree'
 
 export class Game {
   readonly state: GameState
   readonly bus = new EventBus()
   readonly triage: Triage
+  readonly ecg: Ecg
   viewing: DeptId = 'emergency' // the room on screen; only its minigame runs
   pauseWhenHidden = true // dev testing can turn this off to play in a hidden tab
   // Smoothed income per second for each department (drives visual intensity).
@@ -20,6 +23,11 @@ export class Game {
 
   constructor(state: GameState) {
     this.state = state
+    // Root nodes are always owned (trees can gain a new root after a save was made).
+    for (const tree of Object.values(TREES)) {
+      const levels = treeLevels(state, tree.id)
+      for (const n of tree.nodes) if (n.root) levels[n.id] = Math.max(1, levels[n.id] ?? 0)
+    }
     // Keep unlocks consistent with sign-offs (e.g. after loading an older save).
     for (const id of DEPT_ORDER) {
       const after = DEPTS[id].unlockAfter
@@ -31,25 +39,42 @@ export class Game {
       dept: () => this.state.depts.emergency,
       report: (result, patientId, choice) => this.bus.emit('triage', { result, patientId, choice }),
     })
+    this.ecg = new Ecg({
+      stats: () => this.stats('cardiology'),
+      earn: (amount) => this.earn('cardiology', amount, 'active'),
+      dept: () => this.state.depts.cardiology,
+      report: (result) => this.bus.emit('ecg', result),
+    })
   }
 
   stats(tree: TreeId): Record<string, number> {
     return computeStats(this.state, tree)
   }
 
-  // Everything that multiplies a department's income (tree bonus now; trials, exports,
-  // buffs and pager boosts join in later steps).
+  // Everything that multiplies a department's income: its own tree, and patient flow
+  // exported from Emergency to the other rooms. (Trials, buffs and pages join later.)
   incomeMultiplier(dept: DeptId): number {
-    return this.stats(dept).incomeMult ?? 1
+    let m = this.stats(dept).incomeMult ?? 1
+    if (dept !== 'emergency') m *= 1 + (this.stats('emergency').flowExport ?? 0)
+    return m
+  }
+
+  // Cardiology's exported tempo speeds up every room's idle staff.
+  tempo(): number {
+    return this.state.depts.cardiology.unlocked ? 1 + this.stats('cardiology').tempo : 1
   }
 
   // Idle income per second before the income multiplier.
   rawIdleRate(dept: DeptId): number {
+    let rate = 0
     if (dept === 'emergency') {
       const s = this.stats('emergency')
-      return s.nurses * s.nurseRate * s.nurseMult
+      rate = s.nurses * s.nurseRate * s.nurseMult
+    } else if (dept === 'cardiology') {
+      const s = this.stats('cardiology')
+      rate = s.techs * s.techRate * s.techMult + s.pacemakers * s.pacemakerRate * s.pacemakerMult
     }
-    return 0
+    return rate * this.tempo()
   }
 
   idleRate(dept: DeptId): number {
@@ -114,6 +139,7 @@ export class Game {
       if (raw > 0) this.earn(id, raw, 'idle')
     }
     if (active && this.viewing === 'emergency') this.triage.update(dt)
+    if (active && this.viewing === 'cardiology') this.ecg.update(dt)
 
     const k = Math.min(1, ECONOMY.incomeRateSmoothing * dt * 10)
     for (const id of DEPT_ORDER) {

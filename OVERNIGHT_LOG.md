@@ -4,6 +4,31 @@
 
 _Summary goes here at the end of the run._
 
+### Commit: Step 4b, Cardiology room (ECG rhythm minigame, techs, pacemakers, tree)
+- **Built:**
+  - Cardiology minigame: an ECG trace scrolls across a monitor; click or press Space as each
+    beat's spike crosses the white line. A gold band marks "perfect" timing (pays x1.5),
+    a wider band "good". Missing beats or tapping on nothing breaks the combo.
+  - Shockable rhythm jackpots: every ~40 s the trace turns into VF (red squiggle). A charge bar
+    fills; tap once it says "SHOCK NOW!" for a big jackpot (30 beats' worth x combo). The
+    patient jumps, sparks fly, the resident points and cheers. Too early: "Still charging!".
+    Ignore it and it converts on its own ("Awkward.").
+  - Idle: telemetry techs (behind a desk with mini monitors) and pacemakers (a shelf of
+    blinking devices) earn Beats; techs visibly pay them out.
+  - Cardiology tree (17 nodes): Rhythm (beat pay, BPM, timing windows, perfect bonus, combo,
+    Fellowship x2), Devices (pacemakers, batteries, Wireless x2, Hospital Tempo), Staff (techs,
+    training, Second Monitor, Night Team x2), Special (bigger defib, more VF, faster charge).
+  - Hospital Tempo (export): every room's idle income +5% per level.
+- **Test:** needs Emergency's 1M sign-off to unlock. For a quick look in dev:
+  `__rl.state.depts.cardiology.unlocked = true` in the console, then click the tab.
+- **Assumptions:**
+  - ECG layout, scroll speed, VF timing and joke lines: `src/data/cardiology.ts`.
+  - Beat value, BPM, windows, VF frequency, jackpot size, staff rates: baseStats in
+    `src/data/trees/cardiology.ts` (TUNE).
+  - "Global tempo speeds all rooms" is implemented as a bonus to every room's *idle* income
+    (not the active minigame speed, which would make them harder).
+- **Open questions:** should tempo also speed up the minigames themselves?
+
 ### Commit: Step 4a, department tabs and room framework
 - **Built:**
   - Department tabs above the room: each unlocked department shows its name, currency,
