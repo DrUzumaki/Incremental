@@ -4,6 +4,18 @@
 
 _Summary goes here at the end of the run._
 
+### Commit: Step 5b, Heart trial
+- **Built:** Heart trial (Cardiology's organ trial). A big beating heart; stray electrical
+  sparks crawl (wobbling) from the heart wall toward the glowing AV node. Click them to zap.
+  Five leaks and you lose; survive the timer to win. Leaks shown as five little hearts.
+  Cardiology tree gains Stem Cell research: Electrophysiology Lab (shorter cooldown), Heart
+  Foundation Grant (bigger rewards), Crash Cart Drills (plays a tier easier).
+- **Test:** needs Cardiology open with 25K lifetime Beats, then Trials, Start.
+  `npm run check:trials` prints bot win rates.
+- **Assumptions:** spark speed/spawn rate/leaks in `src/data/trials.ts` (HEART, TUNE).
+  Bot check: a human-like bot wins tiers 1-4 reliably, ~70% at tier 5, then walls at 6.
+- **Open questions:** none new.
+
 ### Commit: Step 5a, organ trials framework, Trials panel, Lungs trial, Stem Cells
 - **Built:**
   - "Trials" button in the top bar (badge when a trial is ready) opens the Organ trials

@@ -4,6 +4,7 @@
 import type { TreeDef } from '../tree'
 
 const B = (base: number, growth: number) => [{ currency: 'cardiology' as const, base, growth }]
+const SC = (base: number, growth: number) => [{ currency: 'stemCells' as const, base, growth }]
 
 export const CARDIOLOGY_TREE: TreeDef = {
   id: 'cardiology',
@@ -28,6 +29,9 @@ export const CARDIOLOGY_TREE: TreeDef = {
     pacemakerMult: 1,
     tempo: 0, // exported: every room's idle income x(1 + tempo)
     incomeMult: 1,
+    trialCooldown: 1, // multiplies the Heart trial cooldown
+    trialReward: 0, // extra fraction on trial income rewards
+    trialEase: 0, // plays the trial this many tiers easier
   },
   nodes: [
     { id: 'monitor', name: 'Cardiac Monitor', desc: 'Beep. Beep. Beep. Forever.', branch: 'root',
@@ -75,5 +79,13 @@ export const CARDIOLOGY_TREE: TreeDef = {
       x: -200, y: -70, links: ['defib'], maxLevel: 10, costs: B(1000, 1.35), effects: [{ stat: 'vfEvery', mult: 0.9 }] },
     { id: 'fastCharge', name: 'Fast Charge', desc: 'Defibrillator charges 15% faster', branch: 'special',
       x: -200, y: 70, links: ['defib'], maxLevel: 5, costs: B(600, 1.5), effects: [{ stat: 'chargeTime', mult: 0.85 }] },
+
+    // Trial research (paid in Stem Cells from organ trials)
+    { id: 'cardiacResearch', name: 'Electrophysiology Lab', desc: 'Heart trial comes back 10% sooner', branch: 'trial',
+      x: -310, y: 0, links: ['arrhythmiaMagnet', 'fastCharge'], maxLevel: 5, costs: SC(10, 1.6), effects: [{ stat: 'trialCooldown', mult: 0.9 }] },
+    { id: 'heartGrant', name: 'Heart Foundation Grant', desc: 'Heart trial rewards +20%', branch: 'trial',
+      x: -400, y: -70, links: ['cardiacResearch'], maxLevel: 5, costs: SC(25, 1.8), effects: [{ stat: 'trialReward', add: 0.2 }] },
+    { id: 'crashCartDrills', name: 'Crash Cart Drills', desc: 'Heart trial plays one tier easier', branch: 'trial',
+      x: -400, y: 70, links: ['cardiacResearch'], maxLevel: 3, costs: SC(40, 2), effects: [{ stat: 'trialEase', add: 1 }] },
   ],
 }
