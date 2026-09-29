@@ -5,9 +5,9 @@ import { intensityFor } from '../../core/intensity'
 import type { Game } from '../../core/game'
 import type { ComplaintAct, Severity } from '../../data/emergency'
 import { EFFECTS } from '../../data/effects'
-import { SCENE, SCENE_COLORS, SCENE_TIMING, SWEAT_AT_COMBO } from '../../data/emergencyScene'
+import { NURSE_SCRUBS, SCENE, SCENE_COLORS, SCENE_TIMING, SWEAT_AT_COMBO } from '../../data/emergencyScene'
 import { drawCharacter, type Look } from '../../ui/characters/body'
-import { randomPatientLook, RESIDENT_LOOK } from '../../ui/characters/looks'
+import { randomPatientLook, RESIDENT_LOOK, staffLook } from '../../ui/characters/looks'
 import {
   GESTURE_DURATION,
   patientFrame,
@@ -68,6 +68,23 @@ export function mountTriageView(canvas: HTMLCanvasElement, game: Game, fx: Effec
   let gesture: GestureState | null = null
   let reaction: Gesture | null = null // plays after the point finishes
   let yawnIn = SCENE_TIMING.yawnMin
+
+  // Nurses: idle income piles up here and is paid out visually by one nurse at a time.
+  const nurseLooks = SCENE.nurseSpots.map((_, i) => staffLook(NURSE_SCRUBS, i))
+  const nurseGestures: (GestureState | null)[] = SCENE.nurseSpots.map(() => null)
+  let nurseBucket = 0
+  let nurseTimer = 0
+  let nextNurse = 0
+  game.bus.on('earn', (e) => {
+    if (e.dept === 'emergency' && e.source === 'idle') nurseBucket += e.amount
+  })
+  // The resident cheers at milestones.
+  game.bus.on('milestone', (e) => {
+    if (e.dept === 'emergency') {
+      gesture = { kind: 'cheer', age: 0 }
+      reaction = null
+    }
+  })
 
   function actorFor(id: number) {
     return actors.find((a) => a.active && a.patientId === id)
@@ -201,10 +218,14 @@ export function mountTriageView(canvas: HTMLCanvasElement, game: Game, fx: Effec
   function updateActors(dt: number) {
     for (const a of actors) {
       if (!a.active) continue
-      const speed = a.mode === 'toBay' ? SCENE.toBaySpeed : a.mode === 'stormOut' ? SCENE.stormSpeed : SCENE.walkSpeed
       const dx = a.tx - a.x
       const dy = a.ty - a.y
       const dist = Math.hypot(dx, dy)
+      // Queueing patients hurry when far from their spot, so the front patient is
+      // never still walking in while their patience runs down.
+      const speed = a.mode === 'toBay' ? SCENE.toBaySpeed
+        : a.mode === 'stormOut' ? SCENE.stormSpeed
+        : Math.max(SCENE.walkSpeed, dist * SCENE.catchUp)
       const step = speed * dt
       if (dist > step) {
         a.x += (dx / dist) * step
@@ -219,6 +240,31 @@ export function mountTriageView(canvas: HTMLCanvasElement, game: Game, fx: Effec
       if (a.mode === 'stormOut' && a.x < 0) a.fade -= dt * 3
       if (a.fade <= 0) a.active = false
     }
+  }
+
+  function visibleNurses() {
+    return Math.min(SCENE.nurseSpots.length, game.stats('emergency').nurses)
+  }
+
+  function updateNurses(dt: number) {
+    for (let i = 0; i < nurseGestures.length; i++) {
+      const g = nurseGestures[i]
+      if (!g) continue
+      g.age += dt
+      if (g.age >= GESTURE_DURATION[g.kind]) nurseGestures[i] = null
+    }
+    const n = visibleNurses()
+    if (n === 0) return
+    nurseTimer -= dt
+    if (nurseTimer > 0 || nurseBucket <= 0) return
+    nurseTimer = SCENE_TIMING.nurseBurstEvery / n
+    const i = nextNurse % n
+    nextNurse++
+    nurseGestures[i] = { kind: 'point', age: 0, pointAngle: 1.7 }
+    const tier = intensityFor(game, 'emergency')
+    const at = toScreen(SCENE.nurseSpots[i] + 14, SCENE.nurseY - 50)
+    fx.money(at.x, at.y, nurseBucket, Math.max(1, Math.ceil(EFFECTS.burstCount[tier - 1] / 2)))
+    nurseBucket = 0
   }
 
   function updateResident(dt: number) {
@@ -272,6 +318,33 @@ export function mountTriageView(canvas: HTMLCanvasElement, game: Game, fx: Effec
     ctx.fillStyle = C.muted
     ctx.font = '13px system-ui, sans-serif'
     ctx.fillText('Please take a number. Or don\'t.', 330, 68)
+  }
+
+  function drawNurses() {
+    const n = visibleNurses()
+    for (let i = 0; i < n; i++) {
+      const frame = residentFrame(time + i * 1.3, nurseGestures[i], 0)
+      frame.props = ['stethoscope']
+      frame.face.tired = false
+      drawCharacter(ctx, SCENE.nurseSpots[i], SCENE.nurseY, SCENE.nurseSize, 1, nurseLooks[i], frame)
+    }
+    // Nurse station desk in front of their legs.
+    const d = SCENE.nurseStation
+    ctx.fillStyle = '#35507a'
+    ctx.fillRect(d.x, d.y, d.w, d.h)
+    ctx.fillStyle = '#4a6a99'
+    ctx.fillRect(d.x - 4, d.y - 5, d.w + 8, 7)
+    ctx.fillStyle = C.ink
+    ctx.font = '700 10px system-ui, sans-serif'
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'middle'
+    ctx.fillText('NURSE STATION', d.x + d.w / 2, d.y + d.h / 2 + 2)
+    const total = game.stats('emergency').nurses
+    if (total > n) {
+      ctx.fillStyle = C.yellow
+      ctx.font = '800 14px system-ui, sans-serif'
+      ctx.fillText(`x${total}`, d.x + d.w + 22, d.y + 8)
+    }
   }
 
   function drawBays() {
@@ -394,12 +467,14 @@ export function mountTriageView(canvas: HTMLCanvasElement, game: Game, fx: Effec
       syncQueue()
       updateActors(dt)
       updateResident(dt)
+      updateNurses(dt)
       messageAge += dt
       flashAge += dt
     },
     draw() {
       const showHint = game.stats('emergency').hint > 0
       drawRoom()
+      if (game.stats('emergency').nurses > 0) drawNurses()
       drawBays()
       drawActors(showHint)
       const r = SCENE.resident

@@ -220,13 +220,14 @@ function applyMood(f: CharFrame, act: ComplaintAct, t: number, mood: number) {
 
 // --- Resident ---
 
-export type Gesture = 'point' | 'thumbsUp' | 'facepalm' | 'yawn'
+export type Gesture = 'point' | 'thumbsUp' | 'facepalm' | 'yawn' | 'cheer'
 
 export const GESTURE_DURATION: Record<Gesture, number> = {
   point: 0.55,
   thumbsUp: 0.8,
   facepalm: 1.1,
   yawn: 2.0,
+  cheer: 1.4,
 }
 
 export interface GestureState {
@@ -293,6 +294,14 @@ export function residentFrame(t: number, gesture: GestureState | null, sweat: nu
       target.squash = 1.06
       target.bob = 2
       if (w > 0.5) f.face = { ...f.face, eyes: 'closed', mouth: 'yawn', brows: 'raised' }
+      break
+    case 'cheer':
+      // Both arms up (clipboard and all), hopping.
+      target.armF = [2.5 + Math.sin(k * 20) * 0.2, 0.3]
+      target.armB = [-2.5 - Math.sin(k * 20) * 0.2, -0.3]
+      target.lift = Math.abs(Math.sin(k * Math.PI * 3)) * 6
+      target.squash = 1.05
+      if (w > 0.5) f.face = { ...f.face, eyes: 'happy', mouth: 'grin', brows: 'raised' }
       break
   }
   f.pose = lerpPose(base, target, w)

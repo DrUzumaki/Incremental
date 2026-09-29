@@ -36,3 +36,18 @@ export function randomPatientLook(): Look {
     height: 0.9 + Math.random() * 0.14,
   }
 }
+
+// Hired staff: varied people in matching scrubs. `seed` picks a stable look per spot.
+export function staffLook(scrubs: string, seed: number): Look {
+  const at = <T,>(items: T[], k: number) => items[(seed * 7 + k * 3) % items.length]
+  return {
+    skin: at(SKINS, 1),
+    hair: at(HAIRS, 2),
+    hairStyle: at(['short', 'bun', 'ponytail', 'buzz', 'curly'] as HairStyle[], seed),
+    top: scrubs,
+    topStyle: 'tee',
+    bottom: scrubs,
+    shoes: '#f0f0f0',
+    height: 0.95 + (seed % 3) * 0.03,
+  }
+}

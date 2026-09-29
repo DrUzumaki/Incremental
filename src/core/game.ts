@@ -63,6 +63,18 @@ export class Game {
     return amount
   }
 
+  // Pay out idle income for time spent away. Returns what each department earned.
+  applyOffline(seconds: number): { seconds: number; earned: Partial<Record<DeptId, number>> } {
+    const paid = Math.min(seconds, ECONOMY.offlineCapHours * 3600)
+    const earned: Partial<Record<DeptId, number>> = {}
+    for (const id of DEPT_ORDER) {
+      if (!this.state.depts[id].unlocked) continue
+      const amount = this.idleRate(id) * paid * ECONOMY.offlineEfficiency
+      if (amount > 0) earned[id] = this.earn(id, amount, 'offline')
+    }
+    return { seconds, earned }
+  }
+
   buy(tree: TreeId, node: string): boolean {
     if (!buyNode(this.state, tree, node)) return false
     this.bus.emit('purchase', { tree, node })

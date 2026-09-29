@@ -4,6 +4,28 @@
 
 _Summary goes here at the end of the run._
 
+### Commit: Step 3d, idle nurses on screen, offline earnings, milestone celebrations
+- **Built:**
+  - Hired nurses appear behind a Nurse Station next to the resident (up to 4 shown, then
+    "xN"). Idle income is paid out visually: every couple of seconds a nurse points and a
+    burst of cash flies from them to the counter.
+  - Offline earnings: when you come back, a "While you were on break…" window shows what
+    your staff earned. Also used if the laptop sleeps with the game open.
+  - Milestones (first $1K, then every 10x) get a toast, a confetti shower and the resident
+    cheering. The 1,000,000 sign-off gets a bigger toast, double confetti and a shake.
+  - Queueing patients now hurry to their spot when far away, so the front patient isn't
+    still walking in while their patience runs down.
+- **Test:** buy "Hire Triage Nurse" and watch the nurse station. Close the tab for a few
+  minutes and come back to see the offline summary. Earn $1K / $10K for celebrations.
+- **Assumptions (TUNE):**
+  - Offline pays 50% of the idle rate, capped at 8 hours; absences under 30 s show nothing
+    (`src/data/economy.ts`).
+  - Nurse payout rhythm and station layout: `src/data/emergencyScene.ts`.
+  - Nurses re-use the resident's gestures (they point toward the bays when paying out).
+  - Note: the in-app test browser's save now has extra test money from checking milestones.
+    Use "Reset save" there if you want a clean start.
+- **Open questions:** none.
+
 ### Commit: Step 3c, skill tree (replaces the side upgrade panel)
 - **Built:** `src/ui/skillTree.ts`, a Nodebuster-style tree opened with the "Skill tree"
   button (or the T key). Root in the centre; branches Diagnosis (up, blue), Flow (right,

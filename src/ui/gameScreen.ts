@@ -2,11 +2,12 @@
 import type { Game } from '../core/game'
 import { startLoop } from '../core/loop'
 import { mountTriageView } from '../departments/emergency/triageView'
+import { showOfflineSummary, wireCelebrations } from './celebrations'
 import { createEffects } from './effects'
 import { createHud } from './hud'
 import { createSkillTree } from './skillTree'
 
-export function showGameScreen(app: HTMLElement, game: Game, onOffline: (seconds: number) => void): void {
+export function showGameScreen(app: HTMLElement, game: Game): void {
   app.innerHTML = `
     <div class="room">
       <header class="room-header"></header>
@@ -19,6 +20,7 @@ export function showGameScreen(app: HTMLElement, game: Game, onOffline: (seconds
     </div>
   `
   const fx = createEffects(game.state.settings)
+  wireCelebrations(game, fx)
   const body = app.querySelector<HTMLDivElement>('.room-body')!
   const tree = createSkillTree(body, game, fx)
   const hud = createHud(app.querySelector('.room-header')!, game, () => tree.toggle(game.viewing))
@@ -30,6 +32,9 @@ export function showGameScreen(app: HTMLElement, game: Game, onOffline: (seconds
   window.addEventListener('keydown', (e) => {
     if (e.key === 't' || e.key === 'T') tree.toggle(game.viewing)
   })
+
+  // A long pause while open (e.g. the laptop slept) pays out like offline time.
+  const onOffline = (seconds: number) => showOfflineSummary(game.applyOffline(seconds))
 
   startLoop(game, onOffline, (dt) => {
     view.update(dt)
