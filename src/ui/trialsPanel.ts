@@ -7,7 +7,7 @@ import { DEPT_ORDER, DEPTS, type DeptId } from '../data/departments'
 import { ORGAN_OF, TRIAL_LINES } from '../data/trials'
 import { ORGAN_GAMES } from '../trials/organs'
 import { organSession } from '../trials/trialSession'
-import type { Session } from '../trials/types'
+import type { BossRun } from '../trials/bossSessions'
 import type { Effects } from './effects'
 import { formatDuration, toast } from './overlays'
 import { runSession } from './sessionRunner'
@@ -28,7 +28,13 @@ const BODY_SVG = `
     <path class="organ organ-gut" d="M78 184 q 12 -8 24 0 t 24 0 q 0 10 -12 12 t -24 0 q -12 4 -12 12 q 12 8 24 0 t 24 0" fill="none"/>
   </svg>`
 
-export function createTrialsPanel(host: HTMLElement, game: Game, fx: Effects, bosses: Partial<Record<BossId, () => Session>>) {
+export function createTrialsPanel(
+  host: HTMLElement,
+  game: Game,
+  fx: Effects,
+  bosses: Partial<Record<BossId, () => BossRun>>,
+  onPublications: () => void,
+) {
   const overlay = document.createElement('div')
   overlay.className = 'trials-overlay'
   overlay.hidden = true
@@ -37,6 +43,7 @@ export function createTrialsPanel(host: HTMLElement, game: Game, fx: Effects, bo
       <h3 class="tree-title">Organ trials &amp; bosses</h3>
       <div class="tree-wallet trials-wallet"></div>
       <span class="tree-help">Inside a giant patient. Clearing a trial permanently boosts its department.</span>
+      <button class="pubs-btn" type="button">Publications tree</button>
       <button class="tree-close" type="button">Close ✕</button>
     </div>
     <div class="trials-body">
@@ -49,6 +56,10 @@ export function createTrialsPanel(host: HTMLElement, game: Game, fx: Effects, bo
   const wallet = overlay.querySelector<HTMLDivElement>('.trials-wallet')!
   const svg = overlay.querySelector<SVGElement>('.giant-patient')!
   overlay.querySelector('.tree-close')!.addEventListener('click', () => close())
+  overlay.querySelector('.pubs-btn')!.addEventListener('click', () => {
+    close()
+    onPublications()
+  })
   window.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && !overlay.hidden) close()
   })
@@ -86,16 +97,13 @@ export function createTrialsPanel(host: HTMLElement, game: Game, fx: Effects, bo
     const make = bosses[id]
     if (!make || !bossUnlocked(game.state, id)) return
     close()
-    const session = make()
+    const run = make()
     game.inTrial = true
-    runSession(session, () => {
+    runSession(run.session, () => {
       game.inTrial = false
-      return bossResultText(id)
+      return run.summary()
     })
   }
-
-  // Filled in by the boss sessions themselves (they know what they paid out).
-  let bossResultText: (id: BossId) => string = () => ''
 
   function trialCard(dept: DeptId): string {
     const d = game.state.depts[dept]
@@ -158,9 +166,6 @@ export function createTrialsPanel(host: HTMLElement, game: Game, fx: Effects, bo
     toggle() {
       if (overlay.hidden) open()
       else close()
-    },
-    setBossResult(fn: (id: BossId) => string) {
-      bossResultText = fn
     },
     // True if any trial can be started (for the button badge).
     anyReady(): boolean {

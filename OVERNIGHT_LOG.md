@@ -4,6 +4,27 @@
 
 _Summary goes here at the end of the run._
 
+### Commit: Step 5c, Sepsis boss, Publications and the Publications tree (step 5 complete)
+- **Built:**
+  - Sepsis boss (unlocks with Cardiology's sign-off, from the Trials panel): a body map of 15
+    regions. Infection grows and spreads to neighbouring regions (skin turns green, purple
+    germs appear); click a region to spray antibiotics. Each stage lasts 20 s and spreads
+    faster with more new infection sites. The run ends when 70% of the body is infected.
+  - Every new best stage pays Publications immediately (toast + result card summary).
+  - Publications tree (button in the Trials panel header): Case Report (every room x1.25),
+    Tenure (x2), A Syndrome Named After You (x3), Review Article (more Stem Cells),
+    Meta-analysis (shorter trial cooldowns), Research Grant (more offline earnings),
+    Citation Classic (bosses pay more Publications).
+  - The Trials button badge also lights up when a Publications upgrade is affordable.
+- **Test:** needs Cardiology's sign-off. In dev: `__rl.state.depts.cardiology.signedOff = true`,
+  then Trials, Fight Sepsis. Then Trials, Publications tree.
+- **Assumptions:**
+  - Body map layout: `src/data/sepsisMap.ts`. Spread, stage length, lose threshold and
+    Publications per stage: `BOSSES.sepsis` in `src/data/trials.ts` (TUNE).
+  - "Stage reached" counts stages fully survived.
+  - A boss run has no cooldown (replay as often as you like; only new bests pay).
+- **Open questions:** should boss runs have a cooldown or entry limit?
+
 ### Commit: Step 5b, Heart trial
 - **Built:** Heart trial (Cardiology's organ trial). A big beating heart; stray electrical
   sparks crawl (wobbling) from the heart wall toward the glowing AV node. Click them to zap.

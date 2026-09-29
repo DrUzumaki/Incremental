@@ -129,7 +129,7 @@ export class Game {
     const earned: Partial<Record<DeptId, number>> = {}
     for (const id of DEPT_ORDER) {
       if (!this.state.depts[id].unlocked) continue
-      const amount = this.idleRate(id) * paid * ECONOMY.offlineEfficiency
+      const amount = this.idleRate(id) * paid * ECONOMY.offlineEfficiency * (this.stats('publications').offlineMult ?? 1)
       if (amount > 0) earned[id] = this.earn(id, amount, 'offline')
     }
     return { seconds, earned }

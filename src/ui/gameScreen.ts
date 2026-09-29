@@ -1,8 +1,11 @@
 // Builds the in-game screen (top bar, department tabs, rooms, skill tree)
 // and wires it to the game loop.
 import type { Game } from '../core/game'
+import { anyAffordable } from '../core/tree'
+import { bossStageReached } from '../core/trials'
 import { startLoop } from '../core/loop'
 import { DEPTS, type DeptId } from '../data/departments'
+import { sepsisRun } from '../trials/bossSessions'
 import { showOfflineSummary, wireCelebrations } from './celebrations'
 import { createEffects } from './effects'
 import { createHud } from './hud'
@@ -31,7 +34,13 @@ export function showGameScreen(app: HTMLElement, game: Game): void {
   const playArea = app.querySelector<HTMLDivElement>('.play-area')!
   const hint = app.querySelector<HTMLParagraphElement>('.play-hint')!
   const tree = createSkillTree(body, game, fx)
-  const trials = createTrialsPanel(body, game, fx, {})
+  // Boss runs pay Publications for each new best stage, with a little fanfare.
+  const payStage = (boss: 'sepsis' | 'codeBlue') => (completed: number) => {
+    const pubs = bossStageReached(game, boss, completed)
+    if (pubs > 0) toast(`New best stage! +${pubs} Publications`, 'big', 3)
+    return pubs
+  }
+  const trials = createTrialsPanel(body, game, fx, { sepsis: () => sepsisRun(payStage('sepsis')) }, () => tree.open('publications'))
   const hud = createHud(app.querySelector('.room-header')!, game, {
     onTree: () => {
       trials.close()
@@ -41,7 +50,7 @@ export function showGameScreen(app: HTMLElement, game: Game): void {
       tree.close()
       trials.toggle()
     },
-    trialsReady: () => trials.anyReady(),
+    trialsReady: () => trials.anyReady() || anyAffordable(game.state, 'publications'),
   })
   fx.setMoneyTarget(hud.target)
   fx.setShakeTarget(playArea)
