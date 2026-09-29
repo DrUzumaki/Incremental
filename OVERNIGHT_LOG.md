@@ -4,6 +4,30 @@
 
 _Summary goes here at the end of the run._
 
+### Commit: Step 7a, economy simulator and first balance pass
+- **Built:** `npm run simulate` (`tools/simulate.ts`) plays the real game rules with bot players
+  (sort / tap beats / fill orders / trace incisions at human-ish speed and accuracy), buys
+  the cheapest affordable upgrades, answers pages, sends IVs, clears trials up to tier 4 and
+  fights Sepsis every 10 minutes. It prints a timeline (unlocks, sign-offs, trials) and
+  2-minute snapshots of lifetime, active and idle income per room.
+- **Bugs found and fixed by the simulator:**
+  - Pager boosts and caffeine IVs stacked multiplicatively on the same room (x4 x x4 x x2…).
+    Now they don't stack: the stronger boost wins and the time extends.
+  - Shock / risky jackpots scaled out of control (one shock paid 1,000,000 Beats) because
+    Bigger Defibrillator (x1.3 per level) and Serendipity (x1.5) compounded. Now x1.1 / x1.15.
+- **Balance changes (all marked TUNE in `src/data/trees/*.ts`):**
+  - All rooms' staff use one pattern: hire (+1), training x1.1/level (25), a x1.2/level
+    booster (10), and a one-time x2. Base staff rates are ~15-35% of early active pay.
+  - Each tree has a `COST_SCALE` (ER 1.8, Cardiology 5, Pharmacy 8, Surgery 150) because
+    later rooms arrive with big hospital-wide bonuses (patient flow, synergies, trials, perks).
+  - Surgery perks every 30 operations (was 20); Differential x1.12; Resus Bonus x1.15.
+- **Result (bot player, which is faster than a person):** Emergency signs off ~26 min,
+  Cardiology ~46, Pharmacy ~70, Surgery ~85 min (all four ≈ 1.5 h of optimal play, so a real
+  first run should land near the 2 h target). Active play ≈ 3-8x idle in each room.
+- **Test:** `npm run simulate` (takes ~1 s). `DEBUG_EARN=50000 npm run simulate` lists big payouts.
+- **Open questions:** once you've played, tell me which rooms feel slow/fast; each tree's
+  `COST_SCALE` is the quickest knob.
+
 ### Commit: Step 6d, Code Blue finale and the discharge ending (step 6 complete)
 - **Built:**
   - Code Blue boss (unlocks with Surgery's sign-off): all four organ minigames in rotation

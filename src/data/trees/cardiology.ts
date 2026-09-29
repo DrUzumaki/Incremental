@@ -3,7 +3,9 @@
 // Special (left: defibrillator jackpots).
 import type { TreeDef } from '../tree'
 
-const B = (base: number, growth: number) => [{ currency: 'cardiology' as const, base, growth }]
+// Later rooms arrive with bigger hospital-wide bonuses, so their prices are scaled up.
+const COST_SCALE = 5 // TUNE: checked with npm run simulate
+const B = (base: number, growth: number) => [{ currency: 'cardiology' as const, base: base * COST_SCALE, growth }]
 const SC = (base: number, growth: number) => [{ currency: 'stemCells' as const, base, growth }]
 
 export const CARDIOLOGY_TREE: TreeDef = {
@@ -20,12 +22,12 @@ export const CARDIOLOGY_TREE: TreeDef = {
     vfEvery: 40, // TUNE: seconds between VF episodes
     vfDuration: 4.5,
     chargeTime: 1.2, // seconds the defibrillator takes to charge once VF starts
-    jackpotMult: 30, // a shock pays this many beats' worth
+    jackpotMult: 20, // a shock pays this many beats' worth
     techs: 0,
-    techRate: 1.5, // TUNE: beats per second per telemetry tech
+    techRate: 0.9, // TUNE: beats per second per telemetry tech
     techMult: 1,
     pacemakers: 0,
-    pacemakerRate: 15, // TUNE: beats per second per pacemaker
+    pacemakerRate: 5, // TUNE: beats per second per pacemaker
     pacemakerMult: 1,
     tempo: 0, // exported: every room's idle income x(1 + tempo)
     incomeMult: 1,
@@ -53,10 +55,10 @@ export const CARDIOLOGY_TREE: TreeDef = {
       x: 0, y: -390, links: ['perfectPitch', 'rhythmSection'], maxLevel: 1, costs: B(250_000, 1), effects: [{ stat: 'beatMult', mult: 2 }] },
 
     // Devices
-    { id: 'pacemakers', name: 'Implant Pacemaker', desc: '+1 pacemaker (15 beats/s)', branch: 'devices',
-      x: 110, y: 0, links: ['monitor'], maxLevel: 50, costs: B(500, 1.17), effects: [{ stat: 'pacemakers', add: 1 }] },
-    { id: 'batteries', name: 'Longer Batteries', desc: 'Pacemakers x1.25', branch: 'devices',
-      x: 200, y: -70, links: ['pacemakers'], maxLevel: 25, costs: B(3000, 1.2), effects: [{ stat: 'pacemakerMult', mult: 1.25 }] },
+    { id: 'pacemakers', name: 'Implant Pacemaker', desc: '+1 pacemaker (a steady 5 beats/s)', branch: 'devices',
+      x: 110, y: 0, links: ['monitor'], maxLevel: 50, costs: B(800, 1.18), effects: [{ stat: 'pacemakers', add: 1 }] },
+    { id: 'batteries', name: 'Longer Batteries', desc: 'Pacemakers x1.1', branch: 'devices',
+      x: 200, y: -70, links: ['pacemakers'], maxLevel: 25, costs: B(3000, 1.25), effects: [{ stat: 'pacemakerMult', mult: 1.1 }] },
     { id: 'wireless', name: 'Wireless Pacing', desc: 'Pacemakers x2. Bluetooth hearts.', branch: 'devices',
       x: 200, y: 70, links: ['pacemakers'], maxLevel: 1, costs: B(150_000, 1), effects: [{ stat: 'pacemakerMult', mult: 2 }] },
     { id: 'hospitalTempo', name: 'Hospital Tempo', desc: 'Every room earns +5% idle income', branch: 'devices',
@@ -70,16 +72,16 @@ export const CARDIOLOGY_TREE: TreeDef = {
     // Staff
     { id: 'techs', name: 'Hire Telemetry Tech', desc: '+1 tech who watches monitors for you', branch: 'staff',
       x: 0, y: 110, links: ['monitor'], maxLevel: 50, costs: B(25, 1.15), effects: [{ stat: 'techs', add: 1 }] },
-    { id: 'techTraining', name: 'Telemetry Training', desc: 'Techs earn x1.25', branch: 'staff',
-      x: -90, y: 200, links: ['techs'], maxLevel: 25, costs: B(300, 1.18), effects: [{ stat: 'techMult', mult: 1.25 }] },
-    { id: 'secondMonitor', name: 'Second Monitor', desc: 'Techs earn x1.3', branch: 'staff',
-      x: 90, y: 200, links: ['techs'], maxLevel: 10, costs: B(5000, 1.4), effects: [{ stat: 'techMult', mult: 1.3 }] },
+    { id: 'techTraining', name: 'Telemetry Training', desc: 'Techs earn x1.1', branch: 'staff',
+      x: -90, y: 200, links: ['techs'], maxLevel: 25, costs: B(400, 1.25), effects: [{ stat: 'techMult', mult: 1.1 }] },
+    { id: 'secondMonitor', name: 'Second Monitor', desc: 'Techs earn x1.2', branch: 'staff',
+      x: 90, y: 200, links: ['techs'], maxLevel: 10, costs: B(8000, 1.45), effects: [{ stat: 'techMult', mult: 1.2 }] },
     { id: 'nightTechs', name: 'Night Telemetry Team', desc: 'Techs earn x2', branch: 'staff',
       x: 0, y: 290, links: ['techTraining', 'secondMonitor'], maxLevel: 1, costs: B(400_000, 1), effects: [{ stat: 'techMult', mult: 2 }] },
 
     // Special
-    { id: 'defib', name: 'Bigger Defibrillator', desc: 'Shock jackpots x1.3', branch: 'special',
-      x: -110, y: 0, links: ['monitor'], maxLevel: 20, costs: B(200, 1.22), effects: [{ stat: 'jackpotMult', mult: 1.3 }] },
+    { id: 'defib', name: 'Bigger Defibrillator', desc: 'Shock jackpots x1.1', branch: 'special',
+      x: -110, y: 0, links: ['monitor'], maxLevel: 15, costs: B(300, 1.3), effects: [{ stat: 'jackpotMult', mult: 1.1 }] },
     { id: 'arrhythmiaMagnet', name: 'Arrhythmia Magnet', desc: 'VF comes 10% more often', branch: 'special',
       x: -200, y: -70, links: ['defib'], maxLevel: 10, costs: B(1000, 1.35), effects: [{ stat: 'vfEvery', mult: 0.9 }] },
     { id: 'fastCharge', name: 'Fast Charge', desc: 'Defibrillator charges 15% faster', branch: 'special',

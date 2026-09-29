@@ -78,8 +78,16 @@ export class Pager {
     const page = this.page
     if (!page) return null
     const b = PAGER.boost[page.priority]
-    const boost = { dept: page.dept, mult: b.mult, until: this.time + b.duration * this.host.durationMult() }
-    this.boosts.push(boost)
+    // Boosts in the same room don't stack: keep the bigger one and the later end time.
+    const until = this.time + b.duration * this.host.durationMult()
+    let boost = this.boosts.find((x) => x.dept === page.dept)
+    if (boost) {
+      boost.mult = Math.max(boost.mult, b.mult)
+      boost.until = Math.max(boost.until, until)
+    } else {
+      boost = { dept: page.dept, mult: b.mult, until }
+      this.boosts.push(boost)
+    }
     this.page = null
     this.schedule()
     this.host.onBoost(boost, auto)
@@ -87,7 +95,7 @@ export class Pager {
   }
 
   boostMult(dept: DeptId): number {
-    return this.boosts.filter((b) => b.dept === dept).reduce((m, b) => m * b.mult, 1)
+    return this.boosts.find((b) => b.dept === dept)?.mult ?? 1
   }
 
   boostLeft(dept: DeptId): number {

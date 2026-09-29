@@ -3,7 +3,9 @@
 // Perks (right: permanent hospital-wide perks from completed operations), Trial research.
 import type { TreeDef } from '../tree'
 
-const S = (base: number, growth: number) => [{ currency: 'surgery' as const, base, growth }]
+// Later rooms arrive with bigger hospital-wide bonuses, so their prices are scaled up.
+const COST_SCALE = 150 // TUNE: checked with npm run simulate
+const S = (base: number, growth: number) => [{ currency: 'surgery' as const, base: base * COST_SCALE, growth }]
 const SC = (base: number, growth: number) => [{ currency: 'stemCells' as const, base, growth }]
 
 export const SURGERY_TREE: TreeDef = {
@@ -18,11 +20,11 @@ export const SURGERY_TREE: TreeDef = {
     perfectMult: 1.3, // extra pay for a perfect operation
     timeBonus: 0, // extra pay per fraction of time left
     residents: 0,
-    residentRate: 4, // TUNE: sutures per second per surgical resident
+    residentRate: 0.55, // TUNE: sutures per second per surgical resident
     residentMult: 1,
     robots: 0,
-    robotRate: 300, // TUNE: sutures per second from the surgical robot
-    perkEvery: 20, // completed operations per permanent perk
+    robotRate: 55, // TUNE: sutures per second from the surgical robot
+    perkEvery: 30, // TUNE: completed operations per permanent perk
     perkPower: 0.05, // each perk: every room earns this much more
     incomeMult: 1,
     trialCooldown: 1,
@@ -54,11 +56,11 @@ export const SURGERY_TREE: TreeDef = {
     // Staff
     { id: 'surgResidents', name: 'Hire Surgical Resident', desc: '+1 resident who operates for you', branch: 'staff',
       x: 0, y: 110, links: ['scrubSink'], maxLevel: 50, costs: S(25, 1.15), effects: [{ stat: 'residents', add: 1 }] },
-    { id: 'mmConference', name: 'M&M Conference', desc: 'Residents earn x1.25', branch: 'staff',
-      x: -90, y: 200, links: ['surgResidents'], maxLevel: 25, costs: S(300, 1.18), effects: [{ stat: 'residentMult', mult: 1.25 }] },
-    { id: 'orCoffee', name: 'OR Coffee Machine', desc: 'Residents earn x1.3', branch: 'staff',
-      x: 90, y: 200, links: ['surgResidents'], maxLevel: 10, costs: S(5000, 1.4), effects: [{ stat: 'residentMult', mult: 1.3 }] },
-    { id: 'surgicalRobot', name: 'Surgical Robot', desc: 'A robot that operates nonstop (300 sutures/s)', branch: 'staff',
+    { id: 'mmConference', name: 'M&M Conference', desc: 'Residents earn x1.1', branch: 'staff',
+      x: -90, y: 200, links: ['surgResidents'], maxLevel: 25, costs: S(400, 1.25), effects: [{ stat: 'residentMult', mult: 1.1 }] },
+    { id: 'orCoffee', name: 'OR Coffee Machine', desc: 'Residents earn x1.2', branch: 'staff',
+      x: 90, y: 200, links: ['surgResidents'], maxLevel: 10, costs: S(8000, 1.45), effects: [{ stat: 'residentMult', mult: 1.2 }] },
+    { id: 'surgicalRobot', name: 'Surgical Robot', desc: 'A robot that operates nonstop (worth 100 residents)', branch: 'staff',
       x: 0, y: 290, links: ['mmConference', 'orCoffee'], maxLevel: 1, costs: S(200_000, 1), effects: [{ stat: 'robots', add: 1 }] },
 
     // Perks: permanent hospital-wide bonuses from completed operations

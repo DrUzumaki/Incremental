@@ -3,7 +3,8 @@
 // Staff (down: automation), Special (left: hints, pager, trials).
 import type { TreeDef } from '../tree'
 
-const $ = (base: number, growth: number) => [{ currency: 'emergency' as const, base, growth }]
+const COST_SCALE = 1.8 // TUNE: checked with npm run simulate
+const $ = (base: number, growth: number) => [{ currency: 'emergency' as const, base: base * COST_SCALE, growth }]
 const SC = (base: number, growth: number) => [{ currency: 'stemCells' as const, base, growth }]
 
 export const EMERGENCY_TREE: TreeDef = {
@@ -20,7 +21,7 @@ export const EMERGENCY_TREE: TreeDef = {
     queueSize: 5,
     hint: 0, // 1 = show colour hint
     nurses: 0,
-    nurseRate: 0.4, // TUNE: dollars per second per nurse, before multipliers
+    nurseRate: 0.6, // TUNE: dollars per second per nurse, before multipliers
     nurseMult: 1,
     incomeMult: 1, // multiplies everything this department earns
     flowExport: 0, // exported: other rooms earn x(1 + flowExport)
@@ -41,10 +42,10 @@ export const EMERGENCY_TREE: TreeDef = {
       x: -90, y: -200, links: ['stethoscopes'], maxLevel: 25, costs: $(50, 1.14), effects: [{ stat: 'comboCap', add: 0.1 }] },
     { id: 'patternRecognition', name: 'Pattern Recognition', desc: 'Each combo step pays +1% more', branch: 'diagnosis',
       x: 90, y: -200, links: ['stethoscopes'], maxLevel: 10, costs: $(250, 1.3), effects: [{ stat: 'comboStep', add: 0.01 }] },
-    { id: 'resusBonus', name: 'Resus Bonus', desc: 'Red patients pay x1.25', branch: 'diagnosis',
-      x: -90, y: -300, links: ['training'], maxLevel: 20, costs: $(1500, 1.2), effects: [{ stat: 'redMult', mult: 1.25 }] },
-    { id: 'differential', name: 'Differential Diagnosis', desc: 'All sorting pay x1.15', branch: 'diagnosis',
-      x: 90, y: -300, links: ['patternRecognition'], maxLevel: 25, costs: $(5000, 1.22), effects: [{ stat: 'payMult', mult: 1.15 }] },
+    { id: 'resusBonus', name: 'Resus Bonus', desc: 'Red patients pay x1.15', branch: 'diagnosis',
+      x: -90, y: -300, links: ['training'], maxLevel: 15, costs: $(2000, 1.25), effects: [{ stat: 'redMult', mult: 1.15 }] },
+    { id: 'differential', name: 'Differential Diagnosis', desc: 'All sorting pay x1.12', branch: 'diagnosis',
+      x: 90, y: -300, links: ['patternRecognition'], maxLevel: 25, costs: $(3000, 1.25), effects: [{ stat: 'payMult', mult: 1.12 }] },
     { id: 'boardCert', name: 'Board Certification', desc: 'Sorting pay x2. You passed! Barely.', branch: 'diagnosis',
       x: 0, y: -390, links: ['resusBonus', 'differential'], maxLevel: 1, costs: $(250_000, 1), effects: [{ stat: 'payMult', mult: 2 }] },
 
@@ -68,10 +69,10 @@ export const EMERGENCY_TREE: TreeDef = {
     // Staff
     { id: 'nurses', name: 'Hire Triage Nurse', desc: '+1 nurse who sorts patients for you', branch: 'staff',
       x: 0, y: 110, links: ['desk'], maxLevel: 50, costs: $(25, 1.15), effects: [{ stat: 'nurses', add: 1 }] },
-    { id: 'nurseTraining', name: 'Nurse Training', desc: 'Nurses earn x1.25', branch: 'staff',
-      x: -90, y: 200, links: ['nurses'], maxLevel: 25, costs: $(300, 1.18), effects: [{ stat: 'nurseMult', mult: 1.25 }] },
-    { id: 'breakRoom', name: 'Break Room Coffee', desc: 'Nurses earn x1.3. Decaf is banned.', branch: 'staff',
-      x: 90, y: 200, links: ['nurses'], maxLevel: 10, costs: $(5000, 1.4), effects: [{ stat: 'nurseMult', mult: 1.3 }] },
+    { id: 'nurseTraining', name: 'Nurse Training', desc: 'Nurses earn x1.1', branch: 'staff',
+      x: -90, y: 200, links: ['nurses'], maxLevel: 25, costs: $(400, 1.25), effects: [{ stat: 'nurseMult', mult: 1.1 }] },
+    { id: 'breakRoom', name: 'Break Room Coffee', desc: 'Nurses earn x1.2. Decaf is banned.', branch: 'staff',
+      x: 90, y: 200, links: ['nurses'], maxLevel: 10, costs: $(8000, 1.45), effects: [{ stat: 'nurseMult', mult: 1.2 }] },
     { id: 'nightFloat', name: 'Night Float Team', desc: 'Nurses earn x2', branch: 'staff',
       x: 0, y: 290, links: ['nurseTraining', 'breakRoom'], maxLevel: 1, costs: $(400_000, 1), effects: [{ stat: 'nurseMult', mult: 2 }] },
 

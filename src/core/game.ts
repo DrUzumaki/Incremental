@@ -112,7 +112,7 @@ export class Game {
   }
 
   buffMult(dept: DeptId): number {
-    return this.buffs.filter((b) => b.dept === dept).reduce((m, b) => m * b.mult, 1)
+    return this.buffs.find((b) => b.dept === dept)?.mult ?? 1
   }
 
   buffLeft(dept: DeptId): number {
@@ -123,8 +123,16 @@ export class Game {
   sendBuff(dept: DeptId): boolean {
     const b = this.pharmacy.takeBuff()
     if (!b) return false
-    const buff = { dept, mult: b.mult, until: this.state.playTime + b.duration }
-    this.buffs.push(buff)
+    // IVs to the same room don't stack: keep the stronger one and the later end time.
+    const until = this.state.playTime + b.duration
+    let buff = this.buffs.find((x) => x.dept === dept)
+    if (buff) {
+      buff.mult = Math.max(buff.mult, b.mult)
+      buff.until = Math.max(buff.until, until)
+    } else {
+      buff = { dept, mult: b.mult, until }
+      this.buffs.push(buff)
+    }
     this.bus.emit('buff', buff)
     return true
   }
