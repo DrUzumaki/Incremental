@@ -8,6 +8,7 @@ import { ORGAN_OF, TRIAL_LINES } from '../data/trials'
 import { ORGAN_GAMES } from '../trials/organs'
 import { organSession } from '../trials/trialSession'
 import type { BossRun } from '../trials/bossSessions'
+import type { Sfx } from './audio'
 import type { Effects } from './effects'
 import { formatDuration, toast } from './overlays'
 import { runSession } from './sessionRunner'
@@ -32,6 +33,7 @@ export function createTrialsPanel(
   host: HTMLElement,
   game: Game,
   fx: Effects,
+  sfx: Sfx,
   bosses: Partial<Record<BossId, () => BossRun>>,
   onPublications: () => void,
 ) {
@@ -82,8 +84,12 @@ export function createTrialsPanel(
     const session = organSession(minigame, difficulty, trialDuration(tier), `${minigame.name} trial · Tier ${tier + 1}`)
     close()
     game.inTrial = true
+    sfx.setTrack('boss')
     runSession(session, (won) => {
       game.inTrial = false
+      sfx.setTrack('shift')
+      if (won) sfx.fanfare(true)
+      else sfx.sad()
       const reward = finishTrial(game, dept, won)
       const line = (won ? TRIAL_LINES.win : TRIAL_LINES.lose)[Math.floor(Math.random() * 3)]
       if (!reward) return `${line}<br>You can try again in a minute.`
@@ -99,8 +105,12 @@ export function createTrialsPanel(
     close()
     const run = make()
     game.inTrial = true
-    runSession(run.session, () => {
+    sfx.setTrack('boss')
+    runSession(run.session, (won) => {
       game.inTrial = false
+      sfx.setTrack('shift')
+      if (won) sfx.fanfare(true)
+      else sfx.sad()
       return run.summary()
     }).then((won) => run.after?.(won))
   }

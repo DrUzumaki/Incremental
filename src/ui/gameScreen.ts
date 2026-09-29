@@ -8,6 +8,7 @@ import { DEPT_ORDER, DEPTS, type DeptId } from '../data/departments'
 import { ORGAN_OF, type OrganId } from '../data/trials'
 import { codeBlueRun, sepsisRun } from '../trials/bossSessions'
 import { showOfflineSummary, wireCelebrations } from './celebrations'
+import { createAudio } from './audio'
 import { createEffects } from './effects'
 import { showDischarge } from './ending'
 import { createHud } from './hud'
@@ -15,7 +16,9 @@ import { toast } from './overlays'
 import { createPagerUi } from './pager'
 import type { RoomView } from './roomKit'
 import { ROOMS } from './rooms'
+import { createSettingsButton } from './settings'
 import { createSkillTree } from './skillTree'
+import { wireSounds } from './soundHooks'
 import { createTabs } from './tabs'
 import { createTrialsPanel } from './trialsPanel'
 
@@ -34,7 +37,9 @@ export function showGameScreen(app: HTMLElement, game: Game): void {
     </div>
   `
   const fx = createEffects(game.state.settings)
+  const sfx = createAudio(game.state.settings)
   wireCelebrations(game, fx)
+  wireSounds(game, sfx)
   const body = app.querySelector<HTMLDivElement>('.room-body')!
   const playArea = app.querySelector<HTMLDivElement>('.play-area')!
   const hint = app.querySelector<HTMLParagraphElement>('.play-hint')!
@@ -52,7 +57,7 @@ export function showGameScreen(app: HTMLElement, game: Game): void {
       after: (won: boolean) => won && showDischarge(game, fx),
     }),
   }
-  const trials = createTrialsPanel(body, game, fx, bosses, () => tree.open('publications'))
+  const trials = createTrialsPanel(body, game, fx, sfx, bosses, () => tree.open('publications'))
   const hud = createHud(app.querySelector('.room-header')!, game, {
     onTree: () => {
       trials.close()
@@ -64,6 +69,7 @@ export function showGameScreen(app: HTMLElement, game: Game): void {
     },
     trialsReady: () => trials.anyReady() || anyAffordable(game.state, 'publications'),
   })
+  createSettingsButton(hud.actions, game.state.settings, () => sfx.applySettings())
   fx.setMoneyTarget(hud.target)
   fx.setShakeTarget(playArea)
 
@@ -116,5 +122,6 @@ export function showGameScreen(app: HTMLElement, game: Game): void {
     if (bumpCooldown > 0) return
     bumpCooldown = 0.08
     hud.bump()
+    sfx.coin()
   })
 }

@@ -225,17 +225,6 @@ body {
   40% { transform: scale(1.12); }
 }
 
-.effects-btn {
-  font: inherit;
-  font-size: 0.85rem;
-  padding: 6px 12px;
-  border: 1px solid #3a4d68;
-  border-radius: 8px;
-  background: transparent;
-  color: #8ea3bf;
-  cursor: pointer;
-}
-
 .tree-btn {
   position: relative;
   font: inherit;
@@ -839,4 +828,57 @@ body {
   background: #0f1b2d;
   font-size: 0.9rem;
   text-align: left;
+}
+
+/* Settings popover */
+.settings-wrap {
+  position: relative;
+}
+
+.settings-btn {
+  font: inherit;
+  font-size: 0.85rem;
+  padding: 7px 12px;
+  border: 1px solid #3a4d68;
+  border-radius: 8px;
+  background: transparent;
+  color: #c9d4e3;
+  cursor: pointer;
+}
+
+.settings-pop {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  width: 260px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  border-radius: 12px;
+  background: #1d304b;
+  border: 1px solid #3a5580;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  font-size: 0.9rem;
+  z-index: 30;
+}
+
+.settings-pop[hidden] {
+  display: none;
+}
+
+.settings-pop label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.settings-pop input[type='range'] {
+  flex: 1;
+}
+
+.settings-pop .reset-btn {
+  margin: 4px 0 0;
+  color: #ff8a8a;
+  border-color: #6b3a3a;
 }

@@ -2,7 +2,6 @@
 // The counter ticks up smoothly (never jumps) and bumps when flying money lands.
 import { formatCurrency } from '../core/format'
 import type { Game } from '../core/game'
-import { resetSave } from '../core/save'
 import { anyAffordable } from '../core/tree'
 import { DEPTS } from '../data/departments'
 
@@ -24,29 +23,21 @@ export function createHud(container: HTMLElement, game: Game, actions: HudAction
     <div class="topbar-actions">
       <button class="tree-btn" type="button">Skill tree <span class="badge" hidden>!</span></button>
       <button class="tree-btn trials-btn" type="button">Trials <span class="badge" hidden>!</span></button>
-      <button class="effects-btn" type="button"></button>
-      <button class="reset-btn" type="button">Reset save</button>
     </div>
   `
   const name = container.querySelector<HTMLHeadingElement>('.room-name')!
   const money = container.querySelector<HTMLDivElement>('.money')!
   const rate = container.querySelector<HTMLDivElement>('.rate')!
-  const effectsBtn = container.querySelector<HTMLButtonElement>('.effects-btn')!
   const badge = container.querySelector<HTMLSpanElement>('.tree-btn .badge')!
   const trialsBadge = container.querySelector<HTMLSpanElement>('.trials-btn .badge')!
   container.querySelector('.tree-btn')!.addEventListener('click', actions.onTree)
   container.querySelector('.trials-btn')!.addEventListener('click', actions.onTrials)
-  container.querySelector('.reset-btn')!.addEventListener('click', () => {
-    if (confirm('Erase all progress and start over?')) resetSave()
-  })
-  effectsBtn.addEventListener('click', () => {
-    game.state.settings.reduceEffects = !game.state.settings.reduceEffects
-  })
 
   let shownDept = game.viewing
   let shown = game.state.depts[shownDept].currency
 
   return {
+    actions: container.querySelector<HTMLDivElement>('.topbar-actions')!,
     // Screen position of the counter, where flying money heads.
     target() {
       const r = money.getBoundingClientRect()
@@ -74,7 +65,6 @@ export function createHud(container: HTMLElement, game: Game, actions: HudAction
       rate.textContent = idle > 0 ? `+${formatCurrency(dept, idle, true)}/s idle` : ''
       badge.hidden = !anyAffordable(game.state, dept)
       trialsBadge.hidden = !actions.trialsReady()
-      effectsBtn.textContent = game.state.settings.reduceEffects ? 'Effects: reduced' : 'Effects: full'
     },
   }
 }

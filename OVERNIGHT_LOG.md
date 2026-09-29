@@ -4,6 +4,24 @@
 
 _Summary goes here at the end of the run._
 
+### Commit: Step 7b, sound effects, music and a Settings panel
+- **Built:**
+  - `src/ui/audio.ts`: everything synthesized with the Web Audio API (no audio files).
+    Sound effects: payoff pop that rises in pitch with your combo, coin "tink" as money lands
+    in the counter, wrong-answer buzz, miss thud, defibrillator zap, pager beeps, whoosh for
+    boosts/IVs, click for purchases, fanfares for milestones/sign-offs/jackpots/trial wins,
+    and a comedic sad trombone for losses.
+  - Music: one shared soundtrack (a calm night-shift loop: soft chords, bass, hi-hats) and a
+    faster, minor-key track that plays during organ trials and bosses.
+  - Sound wiring lives in one place (`src/ui/soundHooks.ts`), listening to game events.
+  - Settings button (⚙) replaces the old Effects/Reset buttons: sound effects on/off, music
+    on/off, volume, reduce effects, reset save. Settings are saved.
+- **Test:** click anywhere once (browsers only allow sound after you interact), then play.
+  Settings ⚙ to toggle.
+- **Assumptions:** levels, tempos and chords in `src/data/audio.ts` (TUNE). I couldn't listen
+  to it from here, so please check the mix/volume by ear.
+- **Open questions:** do you want real recorded music later? The code can swap in audio files.
+
 ### Commit: Step 7a, economy simulator and first balance pass
 - **Built:** `npm run simulate` (`tools/simulate.ts`) plays the real game rules with bot players
   (sort / tap beats / fill orders / trace incisions at human-ish speed and accuracy), buys
