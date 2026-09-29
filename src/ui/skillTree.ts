@@ -191,10 +191,33 @@ export function createSkillTree(host: HTMLElement, game: Game, fx: Effects) {
     ctx.setLineDash([])
   }
 
+  // Synergy nodes point outward toward the other department's tree.
+  function drawSynergyArrow(n: TreeNodeDef) {
+    const len = Math.hypot(n.x, n.y) || 1
+    const ux = n.x / len
+    const uy = n.y / len
+    const a = toScreen(n.x + ux * 40, n.y + uy * 40)
+    const b = toScreen(n.x + ux * 120, n.y + uy * 120)
+    ctx.strokeStyle = BRANCH_STYLE.synergy.color
+    ctx.lineWidth = 2
+    ctx.setLineDash([6, 6])
+    ctx.beginPath()
+    ctx.moveTo(a.x, a.y)
+    ctx.lineTo(b.x, b.y)
+    ctx.stroke()
+    ctx.setLineDash([])
+    ctx.fillStyle = BRANCH_STYLE.synergy.color
+    ctx.font = '700 12px system-ui, sans-serif'
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'middle'
+    ctx.fillText(`→ ${DEPTS[n.towards!].name}`, b.x + ux * 10, b.y + uy * 10 - 10)
+  }
+
   function drawNode(n: TreeNodeDef, dt: number) {
     const s = stateOf(n)
     if (s === 'hidden') return
     const p = toScreen(n.x, n.y)
+    if (n.towards) drawSynergyArrow(n)
     const style = BRANCH_STYLE[n.branch] ?? BRANCH_STYLE.special
     let r = TREE_VIEW.nodeRadius * cam.zoom
     const pop = pops.get(n.id)
@@ -283,7 +306,9 @@ export function createSkillTree(host: HTMLElement, game: Game, fx: Effects) {
     const s = stateOf(n)
     info.hidden = false
     if (s === 'silhouette') {
-      info.innerHTML = `<strong>???</strong><p>Buy a neighbouring upgrade to reveal this one.</p>`
+      info.innerHTML = n.towards && !game.state.depts[n.towards].unlocked
+        ? `<strong>??? synergy</strong><p>Opens once ${DEPTS[n.towards].name} is unlocked.</p>`
+        : `<strong>???</strong><p>Buy a neighbouring upgrade to reveal this one.</p>`
     } else {
       const lv = levelOf(game.state, treeId, n.id)
       const style = BRANCH_STYLE[n.branch] ?? BRANCH_STYLE.special

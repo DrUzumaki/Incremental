@@ -14,6 +14,7 @@ export function createTabs(container: HTMLElement, game: Game, onSwitch: (dept: 
     b.innerHTML = `
       <span class="tab-name">${DEPTS[id].name}<span class="tab-check" hidden> ✓</span></span>
       <span class="tab-amount"></span>
+      <span class="tab-boost" hidden></span>
       <span class="badge" hidden>!</span>
     `
     b.addEventListener('click', () => {
@@ -26,6 +27,7 @@ export function createTabs(container: HTMLElement, game: Game, onSwitch: (dept: 
       check: b.querySelector<HTMLSpanElement>('.tab-check')!,
       amount: b.querySelector<HTMLSpanElement>('.tab-amount')!,
       badge: b.querySelector<HTMLSpanElement>('.badge')!,
+      boost: b.querySelector<HTMLSpanElement>('.tab-boost')!,
     }
   })
 
@@ -40,6 +42,9 @@ export function createTabs(container: HTMLElement, game: Game, onSwitch: (dept: 
         t.b.classList.toggle('locked', !d.unlocked)
         t.b.disabled = !d.unlocked
         t.check.hidden = !d.signedOff
+        const left = game.pager.boostLeft(t.id)
+        t.boost.hidden = left <= 0
+        if (left > 0) t.boost.textContent = `x${game.pager.boostMult(t.id)} · ${Math.ceil(left)}s`
         if (d.unlocked) {
           t.amount.textContent = formatCurrency(t.id, d.currency)
           t.badge.hidden = t.id === game.viewing || !anyAffordable(game.state, t.id)

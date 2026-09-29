@@ -29,6 +29,8 @@ export function levelOf(state: GameState, tree: TreeId, id: string): number {
 // A node can be bought once any neighbour is owned (buying a node reveals its neighbours).
 export function isRevealed(state: GameState, tree: TreeDef, node: TreeNodeDef): boolean {
   if (node.root || levelOf(state, tree.id, node.id) > 0) return true
+  // Synergy nodes stay locked until the department they point toward is open.
+  if (node.towards && !state.depts[node.towards].unlocked) return false
   return neighbours(tree, node.id).some((n) => levelOf(state, tree.id, n) > 0)
 }
 

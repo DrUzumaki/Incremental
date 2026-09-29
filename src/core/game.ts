@@ -7,6 +7,7 @@ import { TREES } from '../data/trees'
 import { Ecg } from '../departments/cardiology/ecg'
 import { Triage } from '../departments/emergency/triage'
 import { EventBus, type EarnSource } from './events'
+import { Pager } from './pager'
 import { treeLevels, type GameState } from './state'
 import { buyNode, computeStats } from './tree'
 
@@ -15,6 +16,7 @@ export class Game {
   readonly bus = new EventBus()
   readonly triage: Triage
   readonly ecg: Ecg
+  readonly pager: Pager
   viewing: DeptId = 'emergency' // the room on screen; only its minigame runs
   pauseWhenHidden = true // dev testing can turn this off to play in a hidden tab
   // Smoothed income per second for each department (drives visual intensity).
@@ -45,17 +47,41 @@ export class Game {
       dept: () => this.state.depts.cardiology,
       report: (result) => this.bus.emit('ecg', result),
     })
+    this.pager = new Pager({
+      unlocked: () => DEPT_ORDER.filter((d) => this.state.depts[d].unlocked),
+      viewing: () => this.viewing,
+      autoRespond: () => this.stats('emergency').autoPage > 0,
+      durationMult: () => this.stats('emergency').pagerDuration ?? 1,
+      onPage: (page) => this.bus.emit('page', page),
+      onBoost: (boost, auto) => this.bus.emit('boost', { boost, auto }),
+    })
   }
 
   stats(tree: TreeId): Record<string, number> {
     return computeStats(this.state, tree)
   }
 
-  // Everything that multiplies a department's income: its own tree, and patient flow
-  // exported from Emergency to the other rooms. (Trials, buffs and pages join later.)
+  // Everything that multiplies a department's income: its own tree, patient flow
+  // exported from Emergency, synergy nodes, and pager boosts. (Trials and buffs join later.)
   incomeMultiplier(dept: DeptId): number {
     let m = this.stats(dept).incomeMult ?? 1
     if (dept !== 'emergency') m *= 1 + (this.stats('emergency').flowExport ?? 0)
+    m *= this.synergyMult(dept)
+    m *= this.pager.boostMult(dept)
+    return m
+  }
+
+  // Synergy nodes boost both their own department and the one they point toward.
+  synergyMult(dept: DeptId): number {
+    let m = 1
+    for (const id of DEPT_ORDER) {
+      const levels = this.state.depts[id].nodes
+      for (const node of TREES[id].nodes) {
+        const lv = levels[node.id] ?? 0
+        if (!lv || !node.towards || (id !== dept && node.towards !== dept)) continue
+        for (const e of node.effects) if (e.stat === 'synergy' && e.add) m *= 1 + e.add * lv
+      }
+    }
     return m
   }
 
@@ -138,6 +164,7 @@ export class Game {
       const raw = this.rawIdleRate(id) * dt
       if (raw > 0) this.earn(id, raw, 'idle')
     }
+    if (active) this.pager.update(dt)
     if (active && this.viewing === 'emergency') this.triage.update(dt)
     if (active && this.viewing === 'cardiology') this.ecg.update(dt)
 

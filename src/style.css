@@ -369,7 +369,7 @@ body {
 /* Toasts and modals */
 .toasts {
   position: fixed;
-  top: 16px;
+  top: 84px;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
@@ -510,5 +510,95 @@ body {
 }
 
 .room-canvas[hidden] {
+  display: none;
+}
+
+/* Pager */
+.pager {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  width: min(300px, calc(100vw - 32px));
+  padding: 12px;
+  border-radius: 16px;
+  background: #2b2f3a;
+  border: 2px solid #4a5263;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  z-index: 40;
+}
+
+.pager[hidden] {
+  display: none;
+}
+
+.pager.buzz {
+  animation: buzz 0.5s ease-in-out 3;
+}
+
+@keyframes buzz {
+  20% { transform: translate(-3px, 1px) rotate(-1deg); }
+  40% { transform: translate(3px, -1px) rotate(1deg); }
+  60% { transform: translate(-2px, 0) rotate(-1deg); }
+  80% { transform: translate(2px, 1px) rotate(1deg); }
+}
+
+.pager-screen {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: #9fc49a;
+  color: #10220f;
+  font-family: ui-monospace, monospace;
+}
+
+.pager-high .pager-screen {
+  background: #f2a3a3;
+  color: #3a0b0b;
+}
+
+.pager-dept {
+  font-weight: 800;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+}
+
+.pager-text {
+  font-size: 0.85rem;
+}
+
+.pager-timer {
+  height: 5px;
+  margin: 8px 0;
+  border-radius: 3px;
+  background: #1b1b1b;
+  overflow: hidden;
+}
+
+.pager-bar {
+  height: 100%;
+  background: #f5b83d;
+}
+
+.pager-respond {
+  width: 100%;
+  font: inherit;
+  font-weight: 800;
+  padding: 8px;
+  border: none;
+  border-radius: 10px;
+  background: var(--code-blue);
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.tab-boost {
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #f5b83d;
+}
+
+.tab-boost[hidden] {
   display: none;
 }

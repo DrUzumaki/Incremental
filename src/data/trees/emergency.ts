@@ -22,6 +22,9 @@ export const EMERGENCY_TREE: TreeDef = {
     nurseRate: 0.4, // TUNE: dollars per second per nurse, before multipliers
     nurseMult: 1,
     incomeMult: 1, // multiplies everything this department earns
+    flowExport: 0, // exported: other rooms earn x(1 + flowExport)
+    autoPage: 0, // 1 = staff answer low-priority pages
+    pagerDuration: 1, // pager boosts last this much longer
   },
   nodes: [
     { id: 'desk', name: 'Triage Desk', desc: 'Where it all begins. Mostly paperwork.', branch: 'root',
@@ -51,6 +54,13 @@ export const EMERGENCY_TREE: TreeDef = {
     { id: 'ambulanceBay', name: 'Ambulance Bay', desc: 'Patients arrive 15% faster. Sirens included.', branch: 'flow',
       x: 300, y: -70, links: ['fastTrack'], maxLevel: 5, costs: $(20_000, 2), effects: [{ stat: 'spawnInterval', mult: 0.85 }] },
 
+    { id: 'admissions', name: 'Admissions Desk', desc: 'Patient flow: every other room earns +5%', branch: 'flow',
+      x: 300, y: 70, links: ['waitingRoom'], maxLevel: 20, costs: $(20_000, 1.25), effects: [{ stat: 'flowExport', add: 0.05 }] },
+    { id: 'cardiacFastTrack', name: 'Cardiac Fast-Track', desc: 'Synergy: Emergency and Cardiology both earn +10%', branch: 'synergy',
+      x: 410, y: 0, links: ['ambulanceBay', 'admissions'], maxLevel: 10, towards: 'cardiology',
+      costs: [{ currency: 'emergency', base: 50_000, growth: 1.4 }, { currency: 'cardiology', base: 5_000, growth: 1.4 }],
+      effects: [{ stat: 'synergy', add: 0.1 }] },
+
     // Staff
     { id: 'nurses', name: 'Hire Triage Nurse', desc: '+1 nurse who sorts patients for you', branch: 'staff',
       x: 0, y: 110, links: ['desk'], maxLevel: 50, costs: $(25, 1.15), effects: [{ stat: 'nurses', add: 1 }] },
@@ -64,5 +74,9 @@ export const EMERGENCY_TREE: TreeDef = {
     // Special
     { id: 'cards', name: 'Laminated Triage Cards', desc: 'Shows a faint colour hint on each patient', branch: 'special',
       x: -110, y: 0, links: ['desk'], maxLevel: 1, costs: $(500, 1), effects: [{ stat: 'hint', add: 1 }] },
+    { id: 'louderPager', name: 'Louder Pager', desc: 'Pager boosts last 20% longer', branch: 'special',
+      x: -200, y: 70, links: ['cards'], maxLevel: 10, costs: $(8_000, 1.35), effects: [{ stat: 'pagerDuration', mult: 1.2 }] },
+    { id: 'chargeNurse', name: 'Charge Nurse', desc: 'Staff answer low-priority pages for you', branch: 'special',
+      x: -200, y: -70, links: ['cards'], maxLevel: 1, costs: $(60_000, 1), effects: [{ stat: 'autoPage', add: 1 }] },
   ],
 }

@@ -4,6 +4,30 @@
 
 _Summary goes here at the end of the run._
 
+### Commit: Step 4c, pager, patient-flow export, synergy node (step 4 complete)
+- **Built:**
+  - Pager (bottom-right): once two rooms are open, every 45-90 s a page arrives for a room
+    you're *not* in ("Code in Cardiology!" / "Bed 4 would like a sandwich."). You have 20 s:
+    click Respond (or press P, or just click that room's tab) to jump there and get x4
+    (urgent) or x3 (low priority) payout in that room for 30/20 s. Ignoring costs nothing.
+    Boosts show on the room's tab ("x4 · 22s").
+  - Emergency Special branch: Charge Nurse (staff auto-answer low-priority pages) and
+    Louder Pager (boosts last longer).
+  - Patient flow export: Emergency's "Admissions Desk" node (Flow branch) gives every other
+    room +5% income per level.
+  - First synergy node: "Cardiac Fast-Track" on the Emergency tree's outer edge, costs Dollars
+    AND Beats, +10% income to both rooms per level. It shows a dashed "→ Cardiology" arrow and
+    stays a "?" until Cardiology is open.
+- **Test:** needs two rooms open. In dev: `__rl.state.depts.cardiology.unlocked = true`,
+  then wait for a page (or `__rl.pager.nextAt = __rl.pager.time + 1`).
+- **Assumptions:**
+  - Pager timings, boost sizes and page texts: `src/data/pager.ts` (TUNE).
+  - A pager boost multiplies *all* income in that room (active + idle).
+  - Pages only happen while the tab is visible, and never for the room you're in.
+  - Synergy nodes: one per department pair, placed in the earlier room's tree (ER↔Cardiology
+    here; Cardiology↔Pharmacy, Pharmacy↔Surgery, Surgery↔ER come with those rooms).
+- **Open questions:** none.
+
 ### Commit: Step 4b, Cardiology room (ECG rhythm minigame, techs, pacemakers, tree)
 - **Built:**
   - Cardiology minigame: an ECG trace scrolls across a monitor; click or press Space as each

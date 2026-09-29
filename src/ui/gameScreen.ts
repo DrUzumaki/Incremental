@@ -7,6 +7,7 @@ import { showOfflineSummary, wireCelebrations } from './celebrations'
 import { createEffects } from './effects'
 import { createHud } from './hud'
 import { toast } from './overlays'
+import { createPagerUi } from './pager'
 import type { RoomView } from './roomKit'
 import { ROOMS } from './rooms'
 import { createSkillTree } from './skillTree'
@@ -36,6 +37,8 @@ export function showGameScreen(app: HTMLElement, game: Game): void {
   // Each room gets its own canvas, created the first time it's shown.
   const rooms: Partial<Record<DeptId, { canvas: HTMLCanvasElement; view: RoomView }>> = {}
   function switchTo(dept: DeptId) {
+    // Going to the paged room yourself counts as responding.
+    if (game.pager.page?.dept === dept) game.pager.respond()
     game.viewing = dept
     let room = rooms[dept]
     if (!room) {
@@ -50,6 +53,7 @@ export function showGameScreen(app: HTMLElement, game: Game): void {
   }
   const tabs = createTabs(app.querySelector('.dept-tabs')!, game, switchTo)
   switchTo(game.viewing)
+  const pager = createPagerUi(game, switchTo)
 
   game.bus.on('unlock', ({ dept }) => toast(`${DEPTS[dept].name} is now open! Check the new tab.`, 'big', 6))
 
@@ -67,6 +71,7 @@ export function showGameScreen(app: HTMLElement, game: Game): void {
     room.view.draw()
     hud.update(dt)
     tabs.update()
+    pager.update()
     tree.draw(dt)
     fx.update(dt)
     bumpCooldown -= dt
