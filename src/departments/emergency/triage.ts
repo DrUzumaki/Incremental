@@ -3,19 +3,20 @@
 import {
   COMPLAINTS,
   LEFT_LINES,
-  PATIENT_TINTS,
   SEVERITIES,
   TRIAGE,
   WRONG_LINES,
+  type ComplaintAct,
   type Severity,
 } from '../../data/emergency'
 import { UPGRADES } from '../../data/upgrades'
 import type { GameState } from '../../core/state'
 
 export interface Patient {
+  id: number // unique per arrival, so visuals can follow a patient
   severity: Severity
   complaint: string
-  tint: string
+  act: ComplaintAct
   patience: number // seconds left
   maxPatience: number
 }
@@ -56,6 +57,7 @@ export class Triage {
   private state: GameState
   private spawnTimer = 0
   private pool: Patient[] = [] // reused patient objects
+  private nextId = 1
 
   constructor(state: GameState) {
     this.state = state
@@ -114,8 +116,10 @@ export class Triage {
   private spawn(patience: number): Patient {
     const p = this.pool.pop() ?? ({} as Patient)
     p.severity = pickSeverity()
-    p.complaint = pick(COMPLAINTS[p.severity])
-    p.tint = pick(PATIENT_TINTS)
+    const complaint = pick(COMPLAINTS[p.severity])
+    p.id = this.nextId++
+    p.complaint = complaint.text
+    p.act = complaint.act
     p.patience = patience
     p.maxPatience = patience
     return p

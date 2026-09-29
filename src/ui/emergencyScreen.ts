@@ -25,12 +25,15 @@ export function showEmergencyScreen(app: HTMLElement, state: GameState): void {
   const panel = createUpgradePanel(app.querySelector('.upgrade-panel')!, state)
   const triage = new Triage(state)
   const view = mountTriageView(app.querySelector('.triage-canvas')!, triage, state)
+  // Dev-only handle for poking at the game from the browser console. Removed from builds.
+  if (import.meta.env.DEV) Object.assign(window, { __rl: { state, triage } })
 
   let last = performance.now()
   function frame(now: number) {
     const dt = Math.min((now - last) / 1000, MAX_DT)
     last = now
     view.update(dt)
+    view.draw()
     hud.update()
     panel.update()
     requestAnimationFrame(frame)

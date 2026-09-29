@@ -32,30 +32,35 @@ export const TRIAGE = {
   comboCap: 1.0, // combo bonus stops at +100% (x2), before upgrades
 }
 
-export const COMPLAINTS: Record<Severity, string[]> = {
+export interface Complaint {
+  text: string
+  act: ComplaintAct
+}
+
+export const COMPLAINTS: Record<Severity, Complaint[]> = {
   red: [
-    'Not breathing',
-    'Chest pain, very sweaty',
-    'Unresponsive',
-    'Face swelling after peanuts',
-    'Sudden slurred speech',
-    'Severe asthma attack',
+    { text: 'Not breathing', act: 'clutchThroat' },
+    { text: 'Chest pain, very sweaty', act: 'clutchChest' },
+    { text: 'Unresponsive', act: 'dozing' },
+    { text: 'Face swelling after peanuts', act: 'puffy' },
+    { text: 'Sudden slurred speech', act: 'dizzy' },
+    { text: 'Severe asthma attack', act: 'clutchThroat' },
   ],
   yellow: [
-    'Broken arm',
-    'High fever for 3 days',
-    'Cut that needs stitches',
-    'Kidney stone (loudly)',
-    'Fell off a ladder',
-    'Dog bite on the hand',
+    { text: 'Broken arm', act: 'holdArm' },
+    { text: 'High fever for 3 days', act: 'fever' },
+    { text: 'Cut that needs stitches', act: 'holdArm' },
+    { text: 'Kidney stone (loudly)', act: 'holdSide' },
+    { text: 'Fell off a ladder', act: 'limp' },
+    { text: 'Dog bite on the hand', act: 'holdArm' },
   ],
   green: [
-    'Stubbed toe (very dramatic)',
-    'Needs a sick note',
-    'Runny nose since Tuesday',
-    'Splinter',
-    'Mild sunburn',
-    'Googled symptoms, now worried',
+    { text: 'Stubbed toe (very dramatic)', act: 'limp' },
+    { text: 'Needs a sick note', act: 'note' },
+    { text: 'Runny nose since Tuesday', act: 'sneeze' },
+    { text: 'Splinter', act: 'scratch' },
+    { text: 'Mild sunburn', act: 'scratch' },
+    { text: 'Googled symptoms, now worried', act: 'phone' },
   ],
 }
 
