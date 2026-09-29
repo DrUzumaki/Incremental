@@ -39,7 +39,6 @@ export const SCENE_TIMING = {
   yawnMin: 18, // TUNE: seconds between idle yawns (random in this range)
   yawnMax: 40,
   messageLife: 2.5, // seconds a joke line stays on screen
-  popupLife: 0.9,
   flashLife: 0.15, // bay flash after a sort
 }
 

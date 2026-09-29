@@ -2,6 +2,7 @@
 import type { Game } from '../core/game'
 import { startLoop } from '../core/loop'
 import { mountTriageView } from '../departments/emergency/triageView'
+import { createEffects } from './effects'
 import { createHud } from './hud'
 import { createUpgradePanel } from './upgradePanel'
 
@@ -18,14 +19,27 @@ export function showGameScreen(app: HTMLElement, game: Game, onOffline: (seconds
       </div>
     </div>
   `
+  const fx = createEffects(game.state.settings)
   const hud = createHud(app.querySelector('.room-header')!, game)
   const panel = createUpgradePanel(app.querySelector('.upgrade-panel')!, game)
-  const view = mountTriageView(app.querySelector('.triage-canvas')!, game)
+  const view = mountTriageView(app.querySelector('.triage-canvas')!, game, fx)
+  fx.setMoneyTarget(hud.target)
+  fx.setShakeTarget(app.querySelector('.play-area')!)
+  let bumpCooldown = 0
 
   startLoop(game, onOffline, (dt) => {
     view.update(dt)
     view.draw()
-    hud.update()
+    hud.update(dt)
     panel.update()
+    fx.update(dt)
+    bumpCooldown -= dt
+  })
+
+  // The counter bumps as money lands (at most every 80 ms so it doesn't blur).
+  fx.setOnArrive(() => {
+    if (bumpCooldown > 0) return
+    bumpCooldown = 0.08
+    hud.bump()
   })
 }

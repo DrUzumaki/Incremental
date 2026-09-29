@@ -4,6 +4,25 @@
 
 _Summary goes here at the end of the run._
 
+### Commit: Step 3b, shared effects system (flying money, particles, shake)
+- **Built:** `src/ui/effects.ts`, one full-screen overlay canvas with a fixed pool of
+  particles (hard cap 400): flying money, sparks, confetti, floating text, and screen shake.
+  - Emergency payoff: a correctly sorted patient bursts cash that arcs up and flies into the
+    money counter; "+$12" floats up; sparks. The counter now glides up (never jumps) and
+    bumps as money lands.
+  - Money art grows with value: coin, bill, cash stack, gold bar, gem (one item stands for
+    more money, so particle counts stay sane).
+  - Combos escalate: more items per burst, warmer pop-up colour, bigger text, and light
+    shake from a 10 combo. Losing a combo of 3+ shows "Combo xN lost!" with a shake.
+  - `intensityFor(game, dept)` (`src/core/intensity.ts`) gives tier 1-5 from income rate.
+  - "Effects: full / reduced" button in the top bar (defaults to reduced if your system asks
+    for reduced motion). Reduced = few particles, no shake.
+- **Test:** sort patients correctly and watch the cash fly to the counter; build a combo of 10+.
+  Click "Effects: full" to switch to reduced.
+- **Assumptions (all in `src/data/effects.ts`, marked TUNE):** items per burst per tier,
+  money-art value bands, intensity thresholds (income/s), shake threshold.
+- **Open questions:** none.
+
 ### Commit: Step 3a, game engine core (save v2, game loop, data-driven upgrades)
 - **Built:**
   - `core/game.ts`: one Game object owns the state and all rules; the screen listens to

@@ -22,8 +22,8 @@ export interface Patient {
 
 export type TriageResult =
   | { kind: 'correct'; pay: number }
-  | { kind: 'wrong'; message: string }
-  | { kind: 'left'; message: string }
+  | { kind: 'wrong'; message: string; lostCombo: number }
+  | { kind: 'left'; message: string; lostCombo: number }
 
 // What the triage rules need from the rest of the game.
 export interface TriageHost {
@@ -84,9 +84,10 @@ export class Triage {
     if (front.patience > 0) return
 
     const id = front.id
+    const lostCombo = this.combo
     this.removeFront()
     this.combo = 0
-    this.host.report({ kind: 'left', message: pick(LEFT_LINES) }, id)
+    this.host.report({ kind: 'left', message: pick(LEFT_LINES), lostCombo }, id)
   }
 
   // The player sorts the front patient into a bay.
@@ -97,8 +98,9 @@ export class Triage {
     this.removeFront()
 
     if (severity !== choice) {
+      const lostCombo = this.combo
       this.combo = 0
-      this.host.report({ kind: 'wrong', message: pick(WRONG_LINES) }, id, choice)
+      this.host.report({ kind: 'wrong', message: pick(WRONG_LINES), lostCombo }, id, choice)
       return
     }
 

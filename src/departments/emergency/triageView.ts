@@ -1,8 +1,10 @@
 // Draws the Emergency room: the resident, walking patients, bays, and feedback.
 // Turns clicks / key presses into sorts. Visual only: all rules live in triage.ts.
-import { formatNumber } from '../../core/format'
+import { formatCurrency } from '../../core/format'
+import { intensityFor } from '../../core/intensity'
 import type { Game } from '../../core/game'
 import type { ComplaintAct, Severity } from '../../data/emergency'
+import { EFFECTS } from '../../data/effects'
 import { SCENE, SCENE_COLORS, SCENE_TIMING, SWEAT_AT_COMBO } from '../../data/emergencyScene'
 import { drawCharacter, type Look } from '../../ui/characters/body'
 import { randomPatientLook, RESIDENT_LOOK } from '../../ui/characters/looks'
@@ -14,12 +16,15 @@ import {
   type GestureState,
   type PatientMode,
 } from '../../ui/characters/poses'
+import type { Effects } from '../../ui/effects'
 import type { TriageResult } from './triage'
 
 const { width: W, height: H } = SCENE
 const C = SCENE_COLORS
 const ACTOR_COUNT = 16
-const POPUP_COUNT = 16
+
+// Pop-up text gets warmer as the combo climbs.
+const COMBO_COLORS = ['#46a758', '#9bd44a', '#f5b83d', '#ff8a3d', '#ff5fa2']
 
 // A walking patient on screen. A fixed pool of these is reused.
 interface Actor {
@@ -37,20 +42,12 @@ interface Actor {
   phase: number // animation time offset so patients don't move in sync
 }
 
-interface Popup {
-  active: boolean
-  text: string
-  x: number
-  y: number
-  age: number
-}
-
 // Patients further up the screen are further away, so draw them smaller.
 function depthScale(y: number) {
   return 0.62 + 0.38 * (y / SCENE.queueY)
 }
 
-export function mountTriageView(canvas: HTMLCanvasElement, game: Game) {
+export function mountTriageView(canvas: HTMLCanvasElement, game: Game, fx: Effects) {
   const triage = game.triage
   const ctx = canvas.getContext('2d')!
   const dpr = window.devicePixelRatio || 1
@@ -62,7 +59,6 @@ export function mountTriageView(canvas: HTMLCanvasElement, game: Game) {
     active: false, patientId: 0, look: randomPatientLook(), act: 'note', mode: 'walking',
     x: 0, y: 0, tx: 0, ty: 0, facing: 1, fade: 1, phase: 0,
   }))
-  const popups: Popup[] = Array.from({ length: POPUP_COUNT }, () => ({ active: false, text: '', x: 0, y: 0, age: 0 }))
 
   let time = 0
   let message = ''
@@ -77,10 +73,32 @@ export function mountTriageView(canvas: HTMLCanvasElement, game: Game) {
     return actors.find((a) => a.active && a.patientId === id)
   }
 
-  function spawnPopup(text: string, x: number, y: number) {
-    const p = popups.find((p) => !p.active)
-    if (!p) return
-    Object.assign(p, { active: true, text, x, y, age: 0 })
+  // Canvas coordinates to screen coordinates, for the shared effects layer.
+  function toScreen(x: number, y: number) {
+    const r = canvas.getBoundingClientRect()
+    return { x: r.left + (x / W) * r.width, y: r.top + (y / H) * r.height }
+  }
+
+  // The payoff moment: cash bursts out of the sorted patient and flies to the counter.
+  function payoff(pay: number) {
+    const combo = triage.combo
+    const tier = intensityFor(game, 'emergency')
+    const items = EFFECTS.burstCount[tier - 1] + Math.min(5, Math.floor(combo / EFFECTS.comboItemsEvery))
+    const at = toScreen(SCENE.queueFrontX, SCENE.queueY - 60)
+    fx.money(at.x, at.y, pay, items)
+    const color = COMBO_COLORS[Math.min(COMBO_COLORS.length - 1, Math.floor(combo / 5))]
+    const head = toScreen(SCENE.queueFrontX, SCENE.bubbleY - 8)
+    fx.text(head.x, head.y, '+' + formatCurrency('emergency', pay), color, 20 + Math.min(12, combo))
+    fx.sparks(at.x, at.y, 4 + Math.min(10, combo), color)
+    if (combo >= EFFECTS.shakeFromCombo) fx.shake(1.5 + Math.min(4, (combo - EFFECTS.shakeFromCombo) * 0.2))
+  }
+
+  // Breaking a combo gets a clear, comedic reaction.
+  function comboLost(lost: number) {
+    if (lost < 3) return
+    const at = toScreen(SCENE.queueFrontX, SCENE.messageY + 30)
+    fx.text(at.x, at.y, `Combo x${lost} lost!`, '#ff5f5f', 24)
+    fx.shake(4)
   }
 
   // Keep one actor per queued patient, walking to their spot in line.
@@ -126,6 +144,7 @@ export function mountTriageView(canvas: HTMLCanvasElement, game: Game) {
       stormOut(frontId)
       message = result.message
       messageAge = 0
+      comboLost(result.lostCombo)
       return
     }
     sendToBay(frontId, choice!)
@@ -133,11 +152,12 @@ export function mountTriageView(canvas: HTMLCanvasElement, game: Game) {
     gesture = { kind: 'point', age: 0, pointAngle: bay.pointAngle }
     if (result.kind === 'correct') {
       reaction = 'thumbsUp'
-      spawnPopup('+$' + formatNumber(result.pay), SCENE.queueFrontX, SCENE.bubbleY - 6)
+      payoff(result.pay)
     } else {
       reaction = 'facepalm'
       message = result.message
       messageAge = 0
+      comboLost(result.lostCombo)
     }
   }
 
@@ -362,16 +382,6 @@ export function mountTriageView(canvas: HTMLCanvasElement, game: Game) {
       ctx.fillText(message, 330, SCENE.messageY)
       ctx.globalAlpha = 1
     }
-
-    ctx.font = '800 22px system-ui, sans-serif'
-    ctx.textAlign = 'center'
-    for (const p of popups) {
-      if (!p.active) continue
-      ctx.globalAlpha = 1 - p.age / SCENE_TIMING.popupLife
-      ctx.fillStyle = C.green
-      ctx.fillText(p.text, p.x, p.y)
-    }
-    ctx.globalAlpha = 1
   }
 
   function sweatLevel() {
@@ -386,12 +396,6 @@ export function mountTriageView(canvas: HTMLCanvasElement, game: Game) {
       updateResident(dt)
       messageAge += dt
       flashAge += dt
-      for (const p of popups) {
-        if (!p.active) continue
-        p.age += dt
-        p.y -= 50 * dt
-        if (p.age >= SCENE_TIMING.popupLife) p.active = false
-      }
     },
     draw() {
       const showHint = game.stats('emergency').hint > 0

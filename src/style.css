@@ -211,3 +211,36 @@ body {
 .topbar-actions .reset-btn {
   margin-left: 0;
 }
+
+/* Shared effects layer: sits above everything and never blocks clicks. */
+.effects-layer {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 50;
+}
+
+.money {
+  transform-origin: left center;
+}
+
+.money.bump {
+  animation: bump 0.15s ease-out;
+}
+
+@keyframes bump {
+  40% { transform: scale(1.12); }
+}
+
+.effects-btn {
+  font: inherit;
+  font-size: 0.85rem;
+  padding: 6px 12px;
+  border: 1px solid #3a4d68;
+  border-radius: 8px;
+  background: transparent;
+  color: #8ea3bf;
+  cursor: pointer;
+}
