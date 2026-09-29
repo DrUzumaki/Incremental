@@ -4,6 +4,30 @@
 
 _Summary goes here at the end of the run._
 
+### Commit: Step 6a, Pharmacy room (compounding, risky trial drugs, dispensers, caffeine IV buffs)
+- **Built:**
+  - Pharmacy minigame: a customer brings a prescription (e.g. "Yellow x2, Green x1"). Click the
+    pill jars (or press 1-5) to fill the tray, then Dispense (Enter). Exact match pays Doses
+    (per pill x combo); wrong mix or running out of time breaks the combo. The Rx card shows
+    your progress per colour and flags pills that weren't ordered. Backspace clears the tray.
+  - Risky trial drug (R): pays x3 60% of the time, a x6 jackpot 12% of the time (confetti,
+    shake), otherwise a comedic side effect ("speaks only in rhyme") at normal pay.
+  - Idle: pill dispensers on the wall earn Doses and visibly pay out.
+  - Export, timed buffs: each correct order fills a Caffeine IV bag; when full (8 orders),
+    "Send IV →" buttons appear for each other open room: x2 income there for 45 s (shown on
+    that room's tab).
+  - Pharmacy tree (19 nodes): Compounding (pay per pill, patience, combo, Polypharmacy,
+    PharmD x2), Special (risky odds, jackpot size), Staff (dispensers, motors, barcodes,
+    Robot Pharmacy x2), Buffs (stronger/longer IVs, fewer orders per IV), Liver trial research.
+  - Cardiology tree gains the "Beta Blocker Program" synergy node (Beats + Doses, +10% to both).
+- **Test:** opens after Cardiology's sign-off. Dev shortcut:
+  `__rl.state.depts.pharmacy.unlocked = true`, then the Pharmacy tab.
+- **Assumptions:**
+  - Jar colours, texts and layout: `src/data/pharmacy.ts`; numbers: `src/data/trees/pharmacy.ts`.
+  - Caffeine IV buffs are not saved (they last under a minute).
+  - The order timer is 9 s + 1 s per pill.
+- **Open questions:** none.
+
 ### Commit: Step 5c, Sepsis boss, Publications and the Publications tree (step 5 complete)
 - **Built:**
   - Sepsis boss (unlocks with Cardiology's sign-off, from the Trials panel): a body map of 15

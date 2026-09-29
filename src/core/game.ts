@@ -6,11 +6,19 @@ import type { TreeId } from '../data/tree'
 import { TREES } from '../data/trees'
 import { Ecg } from '../departments/cardiology/ecg'
 import { Triage } from '../departments/emergency/triage'
+import { Compounding } from '../departments/pharmacy/compounding'
 import { EventBus, type EarnSource } from './events'
 import { Pager } from './pager'
 import { trialMult } from './trials'
 import { treeLevels, type GameState } from './state'
 import { buyNode, computeStats } from './tree'
+
+// A timed income boost sent from the Pharmacy to another room.
+export interface Buff {
+  dept: DeptId
+  mult: number
+  until: number // game time (state.playTime)
+}
 
 export class Game {
   readonly state: GameState
@@ -18,6 +26,8 @@ export class Game {
   readonly triage: Triage
   readonly ecg: Ecg
   readonly pager: Pager
+  readonly pharmacy: Compounding
+  readonly buffs: Buff[] = []
   viewing: DeptId = 'emergency' // the room on screen; only its minigame runs
   pauseWhenHidden = true // dev testing can turn this off to play in a hidden tab
   inTrial = false // an organ trial or boss is being played; room minigames pause
@@ -49,6 +59,12 @@ export class Game {
       dept: () => this.state.depts.cardiology,
       report: (result) => this.bus.emit('ecg', result),
     })
+    this.pharmacy = new Compounding({
+      stats: () => this.stats('pharmacy'),
+      earn: (amount) => this.earn('pharmacy', amount, 'active'),
+      dept: () => this.state.depts.pharmacy,
+      report: (result) => this.bus.emit('pharmacy', result),
+    })
     this.pager = new Pager({
       unlocked: () => DEPT_ORDER.filter((d) => this.state.depts[d].unlocked),
       viewing: () => this.viewing,
@@ -72,7 +88,26 @@ export class Game {
     if (dept !== 'emergency') m *= 1 + (this.stats('emergency').flowExport ?? 0)
     m *= this.synergyMult(dept)
     m *= this.pager.boostMult(dept)
+    m *= this.buffMult(dept)
     return m
+  }
+
+  buffMult(dept: DeptId): number {
+    return this.buffs.filter((b) => b.dept === dept).reduce((m, b) => m * b.mult, 1)
+  }
+
+  buffLeft(dept: DeptId): number {
+    return Math.max(0, ...this.buffs.filter((b) => b.dept === dept).map((b) => b.until - this.state.playTime))
+  }
+
+  // Send the Pharmacy's full IV bag to a room.
+  sendBuff(dept: DeptId): boolean {
+    const b = this.pharmacy.takeBuff()
+    if (!b) return false
+    const buff = { dept, mult: b.mult, until: this.state.playTime + b.duration }
+    this.buffs.push(buff)
+    this.bus.emit('buff', buff)
+    return true
   }
 
   // Synergy nodes boost both their own department and the one they point toward.
@@ -103,6 +138,9 @@ export class Game {
     } else if (dept === 'cardiology') {
       const s = this.stats('cardiology')
       rate = s.techs * s.techRate * s.techMult + s.pacemakers * s.pacemakerRate * s.pacemakerMult
+    } else if (dept === 'pharmacy') {
+      const s = this.stats('pharmacy')
+      rate = s.dispensers * s.dispenserRate * s.dispenserMult
     }
     return rate * this.tempo()
   }
@@ -172,6 +210,8 @@ export class Game {
     if (playing) this.pager.update(dt)
     if (playing && this.viewing === 'emergency') this.triage.update(dt)
     if (playing && this.viewing === 'cardiology') this.ecg.update(dt)
+    if (playing && this.viewing === 'pharmacy') this.pharmacy.update(dt)
+    for (let i = this.buffs.length - 1; i >= 0; i--) if (this.buffs[i].until <= this.state.playTime) this.buffs.splice(i, 1)
 
     const k = Math.min(1, ECONOMY.incomeRateSmoothing * dt * 10)
     for (const id of DEPT_ORDER) {

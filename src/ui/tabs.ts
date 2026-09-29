@@ -42,9 +42,11 @@ export function createTabs(container: HTMLElement, game: Game, onSwitch: (dept: 
         t.b.classList.toggle('locked', !d.unlocked)
         t.b.disabled = !d.unlocked
         t.check.hidden = !d.signedOff
-        const left = game.pager.boostLeft(t.id)
+        // Pager boosts and caffeine IV buffs, with the time left on the longest.
+        const left = Math.max(game.pager.boostLeft(t.id), game.buffLeft(t.id))
+        const mult = game.pager.boostMult(t.id) * game.buffMult(t.id)
         t.boost.hidden = left <= 0
-        if (left > 0) t.boost.textContent = `x${game.pager.boostMult(t.id)} · ${Math.ceil(left)}s`
+        if (left > 0) t.boost.textContent = `x${mult.toFixed(1).replace(/\.0$/, '')} · ${Math.ceil(left)}s`
         if (d.unlocked) {
           t.amount.textContent = formatCurrency(t.id, d.currency)
           t.badge.hidden = t.id === game.viewing || !anyAffordable(game.state, t.id)

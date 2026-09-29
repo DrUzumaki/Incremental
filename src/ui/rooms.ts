@@ -3,6 +3,7 @@ import type { Game } from '../core/game'
 import type { DeptId } from '../data/departments'
 import { mountEcgView } from '../departments/cardiology/ecgView'
 import { mountTriageView } from '../departments/emergency/triageView'
+import { mountCompoundingView } from '../departments/pharmacy/compoundingView'
 import type { Effects } from './effects'
 import { setupCanvas, type RoomView } from './roomKit'
 
@@ -27,6 +28,6 @@ const placeholder: Mount = (canvas) => {
 export const ROOMS: Record<DeptId, Mount> = {
   emergency: mountTriageView,
   cardiology: mountEcgView,
-  pharmacy: placeholder,
+  pharmacy: mountCompoundingView,
   surgery: placeholder,
 }

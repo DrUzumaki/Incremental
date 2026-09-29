@@ -4,6 +4,8 @@ import type { DeptId } from '../data/departments'
 import type { Severity } from '../data/emergency'
 import type { EcgResult } from '../departments/cardiology/ecg'
 import type { TriageResult } from '../departments/emergency/triage'
+import type { PharmacyResult } from '../departments/pharmacy/compounding'
+import type { Buff } from './game'
 import type { Boost, Page } from './pager'
 
 export type EarnSource = 'active' | 'idle' | 'offline' | 'bonus'
@@ -15,6 +17,8 @@ export interface GameEvents {
   unlock: { dept: DeptId }
   triage: { result: TriageResult; patientId: number; choice?: Severity }
   ecg: EcgResult
+  pharmacy: PharmacyResult
+  buff: Buff
   page: Page
   boost: { boost: Boost; auto: boolean }
   purchase: { tree: string; node: string }

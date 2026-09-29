@@ -62,6 +62,11 @@ export const CARDIOLOGY_TREE: TreeDef = {
     { id: 'hospitalTempo', name: 'Hospital Tempo', desc: 'Every room earns +5% idle income', branch: 'devices',
       x: 300, y: 0, links: ['batteries', 'wireless'], maxLevel: 20, costs: B(20_000, 1.25), effects: [{ stat: 'tempo', add: 0.05 }] },
 
+    { id: 'betaBlockers', name: 'Beta Blocker Program', desc: 'Synergy: Cardiology and Pharmacy both earn +10%', branch: 'synergy',
+      x: 410, y: 0, links: ['hospitalTempo'], maxLevel: 10, towards: 'pharmacy',
+      costs: [{ currency: 'cardiology', base: 50_000, growth: 1.4 }, { currency: 'pharmacy', base: 5_000, growth: 1.4 }],
+      effects: [{ stat: 'synergy', add: 0.1 }] },
+
     // Staff
     { id: 'techs', name: 'Hire Telemetry Tech', desc: '+1 tech who watches monitors for you', branch: 'staff',
       x: 0, y: 110, links: ['monitor'], maxLevel: 50, costs: B(25, 1.15), effects: [{ stat: 'techs', add: 1 }] },
