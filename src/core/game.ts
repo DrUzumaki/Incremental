@@ -8,6 +8,7 @@ import { Ecg } from '../departments/cardiology/ecg'
 import { Triage } from '../departments/emergency/triage'
 import { EventBus, type EarnSource } from './events'
 import { Pager } from './pager'
+import { trialMult } from './trials'
 import { treeLevels, type GameState } from './state'
 import { buyNode, computeStats } from './tree'
 
@@ -19,6 +20,7 @@ export class Game {
   readonly pager: Pager
   viewing: DeptId = 'emergency' // the room on screen; only its minigame runs
   pauseWhenHidden = true // dev testing can turn this off to play in a hidden tab
+  inTrial = false // an organ trial or boss is being played; room minigames pause
   // Smoothed income per second for each department (drives visual intensity).
   readonly incomeRate: Record<DeptId, number> = { emergency: 0, cardiology: 0, pharmacy: 0, surgery: 0 }
   private earnedThisTick: Record<DeptId, number> = { emergency: 0, cardiology: 0, pharmacy: 0, surgery: 0 }
@@ -61,10 +63,12 @@ export class Game {
     return computeStats(this.state, tree)
   }
 
-  // Everything that multiplies a department's income: its own tree, patient flow
-  // exported from Emergency, synergy nodes, and pager boosts. (Trials and buffs join later.)
+  // Everything that multiplies a department's income: its own tree, cleared organ trials,
+  // the Publications tree, patient flow exported from Emergency, synergy nodes, and pager boosts.
   incomeMultiplier(dept: DeptId): number {
     let m = this.stats(dept).incomeMult ?? 1
+    m *= trialMult(this.state, dept)
+    m *= this.stats('publications').globalIncome ?? 1
     if (dept !== 'emergency') m *= 1 + (this.stats('emergency').flowExport ?? 0)
     m *= this.synergyMult(dept)
     m *= this.pager.boostMult(dept)
@@ -164,9 +168,10 @@ export class Game {
       const raw = this.rawIdleRate(id) * dt
       if (raw > 0) this.earn(id, raw, 'idle')
     }
-    if (active) this.pager.update(dt)
-    if (active && this.viewing === 'emergency') this.triage.update(dt)
-    if (active && this.viewing === 'cardiology') this.ecg.update(dt)
+    const playing = active && !this.inTrial
+    if (playing) this.pager.update(dt)
+    if (playing && this.viewing === 'emergency') this.triage.update(dt)
+    if (playing && this.viewing === 'cardiology') this.ecg.update(dt)
 
     const k = Math.min(1, ECONOMY.incomeRateSmoothing * dt * 10)
     for (const id of DEPT_ORDER) {

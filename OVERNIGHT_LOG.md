@@ -4,6 +4,33 @@
 
 _Summary goes here at the end of the run._
 
+### Commit: Step 5a, organ trials framework, Trials panel, Lungs trial, Stem Cells
+- **Built:**
+  - "Trials" button in the top bar (badge when a trial is ready) opens the Organ trials
+    panel: a giant patient whose organs glow when their trial is ready, plus a card per
+    organ and per boss (Sepsis, Code Blue) with status, reward preview and Start/Fight.
+  - Organ trials unlock when a department has earned 25K lifetime. Clearing one gives a
+    permanent income multiplier to that department (x1.5 for tier 1, bigger each tier) and
+    Stem Cells; the next tier is harder. Cooldown 10 min after a clear, 1 min after a loss.
+  - Trials play in a full-screen window: intro card, 3-2-1 countdown, the minigame with a
+    timer bar and status, "Give up", then a result card. Room minigames pause meanwhile;
+    idle income keeps flowing. The window pauses if the tab is hidden.
+  - Lungs trial (Emergency): hold mouse/Space to breathe in, release to breathe out; keep
+    the white line in the drifting green band to keep oxygen up; random coughs jolt you.
+  - Stem Cell research nodes in the Emergency tree (Special side, "Trial research" branch):
+    Pulmonary Research (shorter cooldown), Respiratory Grant (bigger rewards),
+    Bigger Oxygen Tank (plays a tier easier).
+  - `npm run check:trials`: bots play each trial at every tier and print win rates.
+- **Test:** earn 25K lifetime in Emergency, click Trials, Start Tier 1.
+- **Assumptions:**
+  - Unlock threshold, cooldowns, rewards and each minigame's difficulty: `src/data/trials.ts`.
+  - A lost trial has a 1-minute wait ("losing costs only time").
+  - Trial rewards are stored when earned, so later upgrades don't change past rewards.
+  - Stem Cells are one shared pool, spent on each department's own trial research nodes.
+- **Open questions:** the Lungs check shows a human-like bot wins tiers 1-5 and then hits a
+  wall at tier 6 (the band gets too fast to follow with a 0.25 s delay). Is that the curve
+  you want, or should later tiers ramp more gently?
+
 ### Commit: Step 4c, pager, patient-flow export, synergy node (step 4 complete)
 - **Built:**
   - Pager (bottom-right): once two rooms are open, every 45-90 s a page arrives for a room

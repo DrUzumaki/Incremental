@@ -602,3 +602,218 @@ body {
 .tab-boost[hidden] {
   display: none;
 }
+
+/* Full-screen minigame sessions (organ trials and bosses) */
+.session-back {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(5, 10, 20, 0.85);
+  z-index: 45;
+}
+
+.session {
+  position: relative;
+  width: min(100%, 1000px);
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid #3a5580;
+  background: #0f1b2d;
+}
+
+.session-hud {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  padding: 10px 14px;
+  background: #16263d;
+}
+
+.session-timer {
+  flex: 1;
+  min-width: 120px;
+  height: 10px;
+  border-radius: 5px;
+  background: #0b1422;
+  overflow: hidden;
+}
+
+.session-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #46a758, #f5b83d);
+}
+
+.session-label,
+.session-status {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.session-status {
+  color: #5fe0f0;
+}
+
+.session-quit {
+  font: inherit;
+  font-size: 0.8rem;
+  padding: 5px 10px;
+  border: 1px solid #3a4d68;
+  border-radius: 8px;
+  background: transparent;
+  color: #8ea3bf;
+  cursor: pointer;
+}
+
+.session-canvas {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  touch-action: none;
+}
+
+.session-card {
+  position: absolute;
+  inset: 50% auto auto 50%;
+  transform: translate(-50%, -40%);
+  width: min(90%, 440px);
+  padding: 22px 24px;
+  border-radius: 16px;
+  background: #16263d;
+  border: 1px solid #3a5580;
+  text-align: center;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+}
+
+.session-card[hidden] {
+  display: none;
+}
+
+.session-card h2 {
+  margin: 0 0 8px;
+}
+
+.session-text {
+  color: #c9d4e3;
+}
+
+.session-go {
+  font: inherit;
+  font-weight: 800;
+  padding: 10px 28px;
+  border: none;
+  border-radius: 999px;
+  background: var(--code-blue);
+  color: var(--ink);
+  cursor: pointer;
+}
+
+/* Organ trials panel */
+.trials-overlay {
+  position: absolute;
+  inset: 0;
+  min-height: min(80vh, 720px);
+  display: flex;
+  flex-direction: column;
+  background: rgba(11, 20, 34, 0.96);
+  border: 1px solid #2c3f5a;
+  border-radius: 12px;
+  overflow: auto;
+  z-index: 10;
+}
+
+.trials-overlay[hidden] {
+  display: none;
+}
+
+.trials-body {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 16px;
+  align-items: flex-start;
+}
+
+.giant-patient {
+  width: 180px;
+  flex: none;
+  margin: 0 auto;
+}
+
+.gp-skin { fill: #e8b98f; }
+.gp-gown { fill: #8fb3ff; }
+
+.organ {
+  fill: #6b7a90;
+  stroke: #6b7a90;
+  stroke-width: 6;
+  stroke-linecap: round;
+  opacity: 0.6;
+}
+
+.organ-lungs, .organ-heart, .organ-liver { stroke-width: 0; }
+.organ-gut { fill: none; }
+
+.organ.cooldown { opacity: 0.9; fill: #a45a6a; stroke: #a45a6a; }
+.organ.organ-gut.cooldown { fill: none; }
+
+.organ.ready {
+  opacity: 1;
+  fill: #ff5f7a;
+  stroke: #ff5f7a;
+  animation: organ-pulse 1s ease-in-out infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.organ.organ-gut.ready { fill: none; }
+
+@keyframes organ-pulse {
+  50% { transform: scale(1.12); }
+}
+
+.trials-cards {
+  flex: 1;
+  min-width: 260px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 10px;
+}
+
+.trial-card {
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #16263d;
+  border: 1px solid #2c3f5a;
+  border-left: 4px solid var(--dept, #ff5fa2);
+  font-size: 0.9rem;
+}
+
+.trial-card p {
+  margin: 6px 0;
+}
+
+.boss-card {
+  border-left-color: #ff5fa2;
+}
+
+.muted {
+  color: #8ea3bf;
+}
+
+.trial-start {
+  font: inherit;
+  font-weight: 800;
+  padding: 7px 16px;
+  border: none;
+  border-radius: 999px;
+  background: #46a758;
+  color: #0f1b2d;
+  cursor: pointer;
+}
+
+.trial-start.boss {
+  background: #ff5fa2;
+}

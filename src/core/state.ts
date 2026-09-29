@@ -13,6 +13,13 @@ export interface DeptState {
   milestone: number // how many ECONOMY.milestones have been celebrated
   nodes: Record<string, number> // skill tree node levels
   bestCombo: number
+  trialClears: number // organ trial tiers cleared
+  trialReadyAt: number // Date.now() when the trial can be played again
+  trialMultiplier: number // permanent income multiplier from cleared trials
+}
+
+export interface BossState {
+  best: number // best stage reached
 }
 
 export interface Settings {
@@ -28,6 +35,8 @@ export interface GameState {
   stemCells: number
   publications: number
   pubNodes: Record<string, number> // Publications tree levels
+  bosses: { sepsis: BossState; codeBlue: BossState }
+  discharged: boolean // reached the final stage of Code Blue
   settings: Settings
   lastSeen: number // Date.now() at the last save, for offline earnings
   playTime: number // seconds played
@@ -48,6 +57,9 @@ function newDept(id: DeptId): DeptState {
     milestone: 0,
     nodes: rootLevels(id),
     bestCombo: 0,
+    trialClears: 0,
+    trialReadyAt: 0,
+    trialMultiplier: 1,
   }
 }
 
@@ -61,6 +73,8 @@ export function createNewState(): GameState {
     stemCells: 0,
     publications: 0,
     pubNodes: rootLevels('publications'),
+    bosses: { sepsis: { best: 0 }, codeBlue: { best: 0 } },
+    discharged: false,
     settings: { reduceEffects: reduceMotion, sound: true, music: true, volume: 0.6 },
     lastSeen: Date.now(),
     playTime: 0,

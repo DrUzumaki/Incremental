@@ -8,7 +8,13 @@ import { DEPTS } from '../data/departments'
 
 const COUNTER_SPEED = 6 // how fast the shown number catches up (higher = snappier)
 
-export function createHud(container: HTMLElement, game: Game, onTree: () => void) {
+export interface HudActions {
+  onTree(): void
+  onTrials(): void
+  trialsReady(): boolean
+}
+
+export function createHud(container: HTMLElement, game: Game, actions: HudActions) {
   container.innerHTML = `
     <h2 class="room-name"></h2>
     <div class="counter">
@@ -17,6 +23,7 @@ export function createHud(container: HTMLElement, game: Game, onTree: () => void
     </div>
     <div class="topbar-actions">
       <button class="tree-btn" type="button">Skill tree <span class="badge" hidden>!</span></button>
+      <button class="tree-btn trials-btn" type="button">Trials <span class="badge" hidden>!</span></button>
       <button class="effects-btn" type="button"></button>
       <button class="reset-btn" type="button">Reset save</button>
     </div>
@@ -25,8 +32,10 @@ export function createHud(container: HTMLElement, game: Game, onTree: () => void
   const money = container.querySelector<HTMLDivElement>('.money')!
   const rate = container.querySelector<HTMLDivElement>('.rate')!
   const effectsBtn = container.querySelector<HTMLButtonElement>('.effects-btn')!
-  const badge = container.querySelector<HTMLSpanElement>('.badge')!
-  container.querySelector('.tree-btn')!.addEventListener('click', onTree)
+  const badge = container.querySelector<HTMLSpanElement>('.tree-btn .badge')!
+  const trialsBadge = container.querySelector<HTMLSpanElement>('.trials-btn .badge')!
+  container.querySelector('.tree-btn')!.addEventListener('click', actions.onTree)
+  container.querySelector('.trials-btn')!.addEventListener('click', actions.onTrials)
   container.querySelector('.reset-btn')!.addEventListener('click', () => {
     if (confirm('Erase all progress and start over?')) resetSave()
   })
@@ -64,6 +73,7 @@ export function createHud(container: HTMLElement, game: Game, onTree: () => void
       const idle = game.idleRate(dept)
       rate.textContent = idle > 0 ? `+${formatCurrency(dept, idle, true)}/s idle` : ''
       badge.hidden = !anyAffordable(game.state, dept)
+      trialsBadge.hidden = !actions.trialsReady()
       effectsBtn.textContent = game.state.settings.reduceEffects ? 'Effects: reduced' : 'Effects: full'
     },
   }

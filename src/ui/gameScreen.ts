@@ -12,6 +12,7 @@ import type { RoomView } from './roomKit'
 import { ROOMS } from './rooms'
 import { createSkillTree } from './skillTree'
 import { createTabs } from './tabs'
+import { createTrialsPanel } from './trialsPanel'
 
 export function showGameScreen(app: HTMLElement, game: Game): void {
   app.innerHTML = `
@@ -30,7 +31,18 @@ export function showGameScreen(app: HTMLElement, game: Game): void {
   const playArea = app.querySelector<HTMLDivElement>('.play-area')!
   const hint = app.querySelector<HTMLParagraphElement>('.play-hint')!
   const tree = createSkillTree(body, game, fx)
-  const hud = createHud(app.querySelector('.room-header')!, game, () => tree.toggle(game.viewing))
+  const trials = createTrialsPanel(body, game, fx, {})
+  const hud = createHud(app.querySelector('.room-header')!, game, {
+    onTree: () => {
+      trials.close()
+      tree.toggle(game.viewing)
+    },
+    onTrials: () => {
+      tree.close()
+      trials.toggle()
+    },
+    trialsReady: () => trials.anyReady(),
+  })
   fx.setMoneyTarget(hud.target)
   fx.setShakeTarget(playArea)
 
@@ -73,6 +85,7 @@ export function showGameScreen(app: HTMLElement, game: Game): void {
     tabs.update()
     pager.update()
     tree.draw(dt)
+    trials.update(dt)
     fx.update(dt)
     bumpCooldown -= dt
   })

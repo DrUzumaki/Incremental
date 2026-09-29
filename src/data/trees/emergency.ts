@@ -4,6 +4,7 @@
 import type { TreeDef } from '../tree'
 
 const $ = (base: number, growth: number) => [{ currency: 'emergency' as const, base, growth }]
+const SC = (base: number, growth: number) => [{ currency: 'stemCells' as const, base, growth }]
 
 export const EMERGENCY_TREE: TreeDef = {
   id: 'emergency',
@@ -25,6 +26,9 @@ export const EMERGENCY_TREE: TreeDef = {
     flowExport: 0, // exported: other rooms earn x(1 + flowExport)
     autoPage: 0, // 1 = staff answer low-priority pages
     pagerDuration: 1, // pager boosts last this much longer
+    trialCooldown: 1, // multiplies the Lungs trial cooldown
+    trialReward: 0, // extra fraction on trial income rewards
+    trialEase: 0, // plays the trial this many tiers easier
   },
   nodes: [
     { id: 'desk', name: 'Triage Desk', desc: 'Where it all begins. Mostly paperwork.', branch: 'root',
@@ -78,5 +82,13 @@ export const EMERGENCY_TREE: TreeDef = {
       x: -200, y: 70, links: ['cards'], maxLevel: 10, costs: $(8_000, 1.35), effects: [{ stat: 'pagerDuration', mult: 1.2 }] },
     { id: 'chargeNurse', name: 'Charge Nurse', desc: 'Staff answer low-priority pages for you', branch: 'special',
       x: -200, y: -70, links: ['cards'], maxLevel: 1, costs: $(60_000, 1), effects: [{ stat: 'autoPage', add: 1 }] },
+
+    // Trial research (paid in Stem Cells from organ trials)
+    { id: 'lungResearch', name: 'Pulmonary Research', desc: 'Lungs trial comes back 10% sooner', branch: 'trial',
+      x: -310, y: 0, links: ['louderPager', 'chargeNurse'], maxLevel: 5, costs: SC(10, 1.6), effects: [{ stat: 'trialCooldown', mult: 0.9 }] },
+    { id: 'respiratoryGrant', name: 'Respiratory Grant', desc: 'Lungs trial rewards +20%', branch: 'trial',
+      x: -400, y: -70, links: ['lungResearch'], maxLevel: 5, costs: SC(25, 1.8), effects: [{ stat: 'trialReward', add: 0.2 }] },
+    { id: 'biggerTank', name: 'Bigger Oxygen Tank', desc: 'Lungs trial plays one tier easier', branch: 'trial',
+      x: -400, y: 70, links: ['lungResearch'], maxLevel: 3, costs: SC(40, 2), effects: [{ stat: 'trialEase', add: 1 }] },
   ],
 }
