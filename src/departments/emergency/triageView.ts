@@ -1,7 +1,7 @@
 // Draws the Emergency room: the resident, walking patients, bays, and feedback.
 // Turns clicks / key presses into sorts. Visual only: all rules live in triage.ts.
 import { formatNumber } from '../../core/format'
-import type { GameState } from '../../core/state'
+import type { Game } from '../../core/game'
 import type { ComplaintAct, Severity } from '../../data/emergency'
 import { SCENE, SCENE_COLORS, SCENE_TIMING, SWEAT_AT_COMBO } from '../../data/emergencyScene'
 import { drawCharacter, type Look } from '../../ui/characters/body'
@@ -14,7 +14,7 @@ import {
   type GestureState,
   type PatientMode,
 } from '../../ui/characters/poses'
-import { getTriageStats, type Triage, type TriageResult } from './triage'
+import type { TriageResult } from './triage'
 
 const { width: W, height: H } = SCENE
 const C = SCENE_COLORS
@@ -50,7 +50,8 @@ function depthScale(y: number) {
   return 0.62 + 0.38 * (y / SCENE.queueY)
 }
 
-export function mountTriageView(canvas: HTMLCanvasElement, triage: Triage, state: GameState) {
+export function mountTriageView(canvas: HTMLCanvasElement, game: Game) {
+  const triage = game.triage
   const ctx = canvas.getContext('2d')!
   const dpr = window.devicePixelRatio || 1
   canvas.width = W * dpr
@@ -120,8 +121,7 @@ export function mountTriageView(canvas: HTMLCanvasElement, triage: Triage, state
     a.facing = -1
   }
 
-  function handleResult(result: TriageResult | null, frontId: number, choice?: Severity) {
-    if (!result) return
+  function handleResult(result: TriageResult, frontId: number, choice?: Severity) {
     if (result.kind === 'left') {
       stormOut(frontId)
       message = result.message
@@ -141,12 +141,13 @@ export function mountTriageView(canvas: HTMLCanvasElement, triage: Triage, state
     }
   }
 
+  game.bus.on('triage', ({ result, patientId, choice }) => handleResult(result, patientId, choice))
+
   function sort(severity: Severity) {
-    const front = triage.queue[0]
-    if (!front) return
+    if (!triage.queue[0]) return
     flashBay = severity
     flashAge = 0
-    handleResult(triage.sort(severity), front.id, severity)
+    triage.sort(severity)
   }
 
   // --- Input ---
@@ -170,6 +171,7 @@ export function mountTriageView(canvas: HTMLCanvasElement, triage: Triage, state
     canvas.style.cursor = bayAt(x, y) ? 'pointer' : 'default'
   })
   window.addEventListener('keydown', (e) => {
+    if (!canvas.offsetParent) return // room not on screen
     const bay = SCENE.bays.find((b) => b.key === e.key)
     if (bay && !e.repeat) sort(bay.severity)
   })
@@ -349,7 +351,7 @@ export function mountTriageView(canvas: HTMLCanvasElement, triage: Triage, state
     ctx.fillText(`Combo x${triage.multiplier.toFixed(1)}`, 90, 14)
     ctx.fillStyle = C.muted
     ctx.font = '13px system-ui, sans-serif'
-    ctx.fillText(`${triage.combo} in a row · best ${state.bestCombo}`, 90, 40)
+    ctx.fillText(`${triage.combo} in a row · best ${game.state.depts.emergency.bestCombo}`, 90, 40)
 
     if (messageAge < SCENE_TIMING.messageLife) {
       ctx.globalAlpha = 1 - messageAge / SCENE_TIMING.messageLife
@@ -379,9 +381,6 @@ export function mountTriageView(canvas: HTMLCanvasElement, triage: Triage, state
   return {
     update(dt: number) {
       time += dt
-      const front = triage.queue[0]
-      const frontId = front ? front.id : -1
-      handleResult(triage.update(dt), frontId)
       syncQueue()
       updateActors(dt)
       updateResident(dt)
@@ -395,7 +394,7 @@ export function mountTriageView(canvas: HTMLCanvasElement, triage: Triage, state
       }
     },
     draw() {
-      const { showHint } = getTriageStats(state)
+      const showHint = game.stats('emergency').hint > 0
       drawRoom()
       drawBays()
       drawActors(showHint)

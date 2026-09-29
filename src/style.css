@@ -188,3 +188,26 @@ body {
   text-align: right;
   color: #46a758;
 }
+
+.counter {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+}
+
+.rate {
+  font-size: 0.8rem;
+  color: #8ea3bf;
+  font-variant-numeric: tabular-nums;
+}
+
+.topbar-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.topbar-actions .reset-btn {
+  margin-left: 0;
+}

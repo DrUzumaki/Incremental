@@ -25,11 +25,8 @@ export const TRIAGE = {
   basePay: { red: 5, yellow: 3, green: 1 } as Record<Severity, number>,
   // How likely each severity is to walk in (should add up to 1).
   severityWeights: { red: 0.25, yellow: 0.35, green: 0.4 } as Record<Severity, number>,
-  spawnInterval: 1.6, // seconds between new arrivals
-  queueSize: 5, // most patients waiting at once
-  patience: 6, // seconds the front patient waits before leaving
-  comboStep: 0.1, // +10% pay per correct sort in a row
-  comboCap: 1.0, // combo bonus stops at +100% (x2), before upgrades
+  // Patience, arrival speed, queue size and combo numbers are skill-tree stats:
+  // see baseStats in src/data/trees/emergency.ts.
 }
 
 export interface Complaint {

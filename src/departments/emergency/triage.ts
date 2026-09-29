@@ -9,8 +9,7 @@ import {
   type ComplaintAct,
   type Severity,
 } from '../../data/emergency'
-import { UPGRADES } from '../../data/upgrades'
-import type { GameState } from '../../core/state'
+import type { DeptState } from '../../core/state'
 
 export interface Patient {
   id: number // unique per arrival, so visuals can follow a patient
@@ -26,16 +25,12 @@ export type TriageResult =
   | { kind: 'wrong'; message: string }
   | { kind: 'left'; message: string }
 
-// Minigame numbers after upgrades are applied.
-export function getTriageStats(state: GameState) {
-  const lv = state.upgrades
-  return {
-    payBonus: lv.stethoscopes * UPGRADES.stethoscopes.effect,
-    patience: TRIAGE.patience + lv.chairs * UPGRADES.chairs.effect,
-    comboCap: TRIAGE.comboCap + lv.training * UPGRADES.training.effect,
-    spawnInterval: TRIAGE.spawnInterval * UPGRADES.fastTrack.effect ** lv.fastTrack,
-    showHint: lv.cards > 0,
-  }
+// What the triage rules need from the rest of the game.
+export interface TriageHost {
+  stats(): Record<string, number> // Emergency tree stats
+  earn(amount: number): number // returns the amount after multipliers
+  dept(): DeptState
+  report(result: TriageResult, patientId: number, choice?: Severity): void
 }
 
 function pick<T>(items: T[]): T {
@@ -54,63 +49,66 @@ function pickSeverity(): Severity {
 export class Triage {
   readonly queue: Patient[] = [] // queue[0] is the patient being triaged
   combo = 0
-  private state: GameState
+  private host: TriageHost
   private spawnTimer = 0
   private pool: Patient[] = [] // reused patient objects
   private nextId = 1
 
-  constructor(state: GameState) {
-    this.state = state
+  constructor(host: TriageHost) {
+    this.host = host
   }
 
   get multiplier(): number {
-    const { comboCap } = getTriageStats(this.state)
-    return 1 + Math.min(this.combo * TRIAGE.comboStep, comboCap)
+    const s = this.host.stats()
+    return 1 + Math.min(this.combo * s.comboStep, s.comboCap)
   }
 
-  // Advance time. Returns a result if the front patient gave up and left.
-  update(dt: number): TriageResult | null {
-    const stats = getTriageStats(this.state)
+  // Advance time: new arrivals, and the front patient's patience.
+  update(dt: number): void {
+    const s = this.host.stats()
 
     this.spawnTimer += dt
-    if (this.spawnTimer >= stats.spawnInterval) {
-      if (this.queue.length < TRIAGE.queueSize) {
-        this.queue.push(this.spawn(stats.patience))
+    if (this.spawnTimer >= s.spawnInterval) {
+      if (this.queue.length < s.queueSize) {
+        this.queue.push(this.spawn(s.patience))
         this.spawnTimer = 0
       } else {
         // Queue is full: hold the next patient at the door until there's room.
-        this.spawnTimer = stats.spawnInterval
+        this.spawnTimer = s.spawnInterval
       }
     }
 
     const front = this.queue[0]
-    if (!front) return null
+    if (!front) return
     front.patience -= dt
-    if (front.patience > 0) return null
+    if (front.patience > 0) return
 
+    const id = front.id
     this.removeFront()
     this.combo = 0
-    return { kind: 'left', message: pick(LEFT_LINES) }
+    this.host.report({ kind: 'left', message: pick(LEFT_LINES) }, id)
   }
 
   // The player sorts the front patient into a bay.
-  sort(choice: Severity): TriageResult | null {
+  sort(choice: Severity): void {
     const front = this.queue[0]
-    if (!front) return null
-    const severity = front.severity
+    if (!front) return
+    const { severity, id } = front
     this.removeFront()
 
     if (severity !== choice) {
       this.combo = 0
-      return { kind: 'wrong', message: pick(WRONG_LINES) }
+      this.host.report({ kind: 'wrong', message: pick(WRONG_LINES) }, id, choice)
+      return
     }
 
-    const { payBonus } = getTriageStats(this.state)
-    const pay = (TRIAGE.basePay[severity] + payBonus) * this.multiplier
+    const s = this.host.stats()
+    const base = (TRIAGE.basePay[severity] + s.payFlat) * (severity === 'red' ? s.redMult : 1)
+    const pay = this.host.earn(base * s.payMult * this.multiplier)
     this.combo += 1
-    this.state.dollars += pay
-    this.state.bestCombo = Math.max(this.state.bestCombo, this.combo)
-    return { kind: 'correct', pay }
+    const dept = this.host.dept()
+    dept.bestCombo = Math.max(dept.bestCombo, this.combo)
+    this.host.report({ kind: 'correct', pay }, id, choice)
   }
 
   private spawn(patience: number): Patient {
