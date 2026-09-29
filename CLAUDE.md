@@ -18,6 +18,8 @@ small, and never add features that weren't asked for.
   and Publications (from new best boss stages, spent on big permanent global upgrades).
 - Upgrades: 15–20 upgrade TYPES per department (~70 total). Most are multi-level up to a max
   (e.g. 25 or 50); a few are one-time unlocks.
+- Upgrades are bought on a SKILL TREE per department (Nodebuster-style), not a side list.
+  See "Skill trees" below.
 - Tone: light, cartoonish, medical in-jokes. No gore. Failure is comedic, never grim.
 - Title screen: "Resident Life" as the large bold title; "Code Blue" as a smaller subtitle
   underneath, aligned right.
@@ -53,17 +55,45 @@ small, and never add features that weren't asked for.
 - Clean flat vector shapes (drawn in code on Canvas or as SVG). No pixel art.
 - One shared soundtrack, with special tracks for events (boss fights, codes).
 
-## Feel and animation ("juice")
+## Feel and animation ("juice") — CORE DESIGN PILLAR
 
-- Target feel: Fortune Mill-level spectacle. Money should visibly pour in, and on-screen
-  activity should grow as the numbers grow. Achieve it with flat vector shapes, colour, motion
-  and particles, not pixel art.
-- Every new feature ships with basic feedback: a pop-up, a small tween or a flash. The
-  big showpiece effects (particle storms, screen shake, animated staff) come in step 7.
-- Visual effects never change game rules. They read from the game state, so they can be
-  toned down later (e.g. a "reduce effects" setting) without touching the logic.
-- Effects go through one shared, pooled effects system (particles, pop-ups, shake), built
-  with the game loop in step 3.
+Satisfaction is the main reason people play this genre. Fortune Mill works because each room's
+core action (a dart hitting the board, a pachinko ball dropping, a scratch-off) visibly spits out
+money, and as you upgrade it escalates until money never stops pouring. We copy that.
+
+- **Every room has one payoff moment** that must feel good even at level 1. Emergency: a sorted
+  patient bursts out cash that arcs up to the money counter, with a pop sound.
+- **Intensity scales with progress.** The more upgraded a room is, the more there is on screen:
+  more patients, more staff working, more and bigger money bursts, faster motion, until the
+  room is a constant fountain of money. The late game should look absurd, in a good way.
+- **Tie intensity to game state, not to time.** Visual tier is driven by the room's income
+  rate / upgrades owned, computed by one helper (e.g. `intensityFor(room)`), so it always
+  matches how powerful the player is.
+- **Money art upgrades with value** so particle counts stay sane while the feeling grows:
+  coins → bills → cash stacks → gold bars → gems. One big bar can stand for many coins.
+- **Money flies to the counter.** Earned money physically travels to the currency display,
+  which bumps/pulses on arrival. The counter ticks up smoothly, never jumps.
+- **Combos escalate the feel:** rising sound pitch, stronger colour, more particles, light
+  screen shake at high combos. Breaking a combo has a comedic, clearly-readable reaction.
+- **Milestones get celebrations:** first $1K, each 10x, and the 1,000,000 sign-off get a
+  bigger moment (flash, confetti, resident cheering).
+- **Emergency escalation guide** (tune the thresholds later with the simulator):
+  1. Walk-ins one at a time; small cash pops.
+  2. Busier queue; nurses sorting beside the resident; cash arcs into a tip jar.
+  3. Ambulances pull up with sirens; patients stream in; steady spray of bills.
+  4. Helicopter pad, stretchers on a conveyor; cash stacks raining constantly.
+  5. Absurd: whole wall is a moving river of patients, gold bars fountaining nonstop.
+- Other rooms follow the same idea (Cardiology: each heartbeat pumps money out, defib jackpots
+  explode; Pharmacy: jackpot prescriptions spill pills and cash; Surgery: sutures zip with
+  sparks, completed operations pay out in a burst).
+- **Performance is part of the feel:** stay smooth at 60 fps even at max intensity. Use one
+  shared pooled effects system (particles, pop-ups, flying money, shake) with a hard cap on
+  live particles; merge small payouts into bigger visual items instead of spawning more.
+- Effects never change game rules; they only read game state. Include a "reduce effects"
+  setting (and respect prefers-reduced-motion).
+- Every new feature ships with basic feedback. The shared effects system is built with the
+  game loop in step 3; full escalation tiers and the showpiece effects come in step 7, but
+  each room should reach at least tier 2 when it is first built.
 
 ## Characters (flat vector, animated, drawn in code)
 
@@ -81,6 +111,25 @@ small, and never add features that weren't asked for.
   - After sorting, walk to their bay (red/yellow/green); if patience runs out they storm out.
 - Character drawing and animation live in reusable code (e.g. src/ui/characters/), so every
   department shares one body system with different outfits, poses and props.
+
+## Skill trees
+
+- Each department has its own tree, opened with a "Skill tree" button from the room. The room
+  keeps running (idle staff keep earning) while the tree is open.
+- Layout: a root node in the centre; branches grow outward. Emergency branches:
+  Diagnosis (pay, combo), Flow (arrivals, patience), Staff (automation), Special (hints, pager).
+- Buying a node reveals its neighbours. Unrevealed neighbours show as locked "?" silhouettes,
+  so there's always something to aim for.
+- Most nodes are multi-level (Lv x/max, cost = base * growth ** level); some are one-time.
+- Node states are visually distinct: locked, affordable (glows/pulses), too expensive, maxed.
+- The tree can be panned (drag) and zoomed (scroll); it starts small and grows large.
+- Synergy nodes sit on a tree's outer edge, cost currency from two departments, and link
+  visually toward the other department's tree.
+- While in the room, the Skill tree button shows a badge when any revealed node is
+  affordable, so players still feel upgrades "pop" into affordability without the tree open.
+- Tree layout (node positions, links, costs, effects) is data in src/data/, not hard-coded
+  in drawing code. Drawn in flat vector style on Canvas, with juice on purchase.
+- Later: a global Publications tree (boss rewards) uses the same tree system.
 
 ## Pager system
 
@@ -120,15 +169,35 @@ tools/
 1. Project setup (Vite + TypeScript, Git).
 2. Emergency prototype with plain shapes: triage minigame, money, 5 upgrades, save/load.
 2b. Character pass: animated resident in the corner and animated Emergency patients (see Characters).
-3. Core systems: game loop, idle staff, offline earnings, upgrade panel.
+3. Core systems: game loop, idle staff, offline earnings, and the skill tree (replacing the
+   side upgrade panel; move the 5 existing upgrades into the Emergency tree).
 4. Cardiology + pager + cross-room exports.
 5. Lungs and Heart trials, then Sepsis.
 6. Pharmacy, Surgery, their trials, and the Code Blue finale.
 7. Balancing with the simulator, then art, sound, and polish.
 8. Playtest, then publish on itch.io.
 
-Current step: 3. Step 2 done: Emergency triage prototype (triage minigame, dollars, 5 upgrades, save/load, reset button).
+Current step: 2b (Stage A done: character system + dev preview at /characters.html; Stage B, wiring into Emergency, next).
 (Update this line as we progress.)
+
+## Working unattended (overnight runs)
+
+When told to work unattended:
+- Work on a branch, never main: `git checkout -b overnight-<date>` (e.g. overnight-2026-09-29).
+  Commit and push that branch after each small working piece; do not merge into main.
+- Keep going through the build order as far as possible without waiting for input (up to and
+  including step 7; never publish anything in step 8). Where a design is only sketched in this
+  file (e.g. trial or boss minigame details), build a simple, playable version that follows
+  the sketch, log the open questions, and keep going.
+- When a design choice isn't covered here, pick the simplest reasonable option, keep going,
+  and record it. Never delete or rewrite existing design sections of this file.
+- Make every choice easy to change later: numbers, text, colours, timings and tree layout go
+  in src/data/; mark guessed values with a `// TUNE:` comment explaining what they control.
+- Keep a running log in OVERNIGHT_LOG.md (newest run at the top), one entry per commit:
+  what was built, how to test it, each assumption made and the exact file/setting to change
+  it, and any open questions. End the run with a short summary at the top of the entry.
+- If something fails repeatedly (build errors, a bug you can't fix in a few tries), revert to
+  the last working commit, log what happened, and move on or stop.
 
 ## How to work in this repo
 

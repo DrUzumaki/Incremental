@@ -4,6 +4,22 @@ export type Severity = 'red' | 'yellow' | 'green'
 
 export const SEVERITIES: Severity[] = ['red', 'yellow', 'green']
 
+// How a patient acts out their complaint while walking in and waiting.
+export type ComplaintAct =
+  | 'clutchChest'
+  | 'clutchThroat'
+  | 'dozing'
+  | 'dizzy'
+  | 'puffy'
+  | 'holdArm'
+  | 'limp'
+  | 'fever'
+  | 'holdSide'
+  | 'sneeze'
+  | 'scratch'
+  | 'phone'
+  | 'note'
+
 export const TRIAGE = {
   // Dollars paid for a correct sort, before upgrades and combo.
   basePay: { red: 5, yellow: 3, green: 1 } as Record<Severity, number>,
