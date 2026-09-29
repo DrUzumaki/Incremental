@@ -12,6 +12,7 @@ import { ResidentActor, StaffCrew } from '../../ui/characters/actors'
 import { patientFrame, residentFrame, type PatientMode } from '../../ui/characters/poses'
 import type { Effects } from '../../ui/effects'
 import { screenMapper, setupCanvas, type RoomView } from '../../ui/roomKit'
+import { createEscalation } from './escalation'
 import type { TriageResult } from './triage'
 
 const { width: W, height: H } = SCENE
@@ -58,6 +59,7 @@ export function mountTriageView(canvas: HTMLCanvasElement, game: Game, fx: Effec
   let flashBay: Severity | null = null
   let flashAge = SCENE_TIMING.flashLife
   const resident = new ResidentActor()
+  const escalation = createEscalation(ctx, fx, toScreen)
   // Nurses visibly pay out the idle income, one at a time.
   const nurseLooks = SCENE.nurseSpots.map((_, i) => staffLook(NURSE_SCRUBS, i))
   const nurses = new StaffCrew(SCENE.nurseSpots.length, SCENE_TIMING.nurseBurstEvery)
@@ -79,6 +81,7 @@ export function mountTriageView(canvas: HTMLCanvasElement, game: Game, fx: Effec
     const items = EFFECTS.burstCount[tier - 1] + Math.min(5, Math.floor(combo / EFFECTS.comboItemsEvery))
     const at = toScreen(SCENE.queueFrontX, SCENE.queueY - 60)
     fx.money(at.x, at.y, pay, items)
+    escalation.tip()
     const color = COMBO_COLORS[Math.min(COMBO_COLORS.length - 1, Math.floor(combo / 5))]
     const head = toScreen(SCENE.queueFrontX, SCENE.bubbleY - 8)
     fx.text(head.x, head.y, '+' + formatCurrency('emergency', pay), color, 20 + Math.min(12, combo))
@@ -413,17 +416,20 @@ export function mountTriageView(canvas: HTMLCanvasElement, game: Game, fx: Effec
       updateActors(dt)
       resident.update(dt)
       nurses.update(dt, visibleNurses(), nurseBurst)
+      escalation.update(dt, intensityFor(game, 'emergency'))
       messageAge += dt
       flashAge += dt
     },
     draw() {
       const showHint = game.stats('emergency').hint > 0
       drawRoom()
+      escalation.drawWindow()
       if (game.stats('emergency').nurses > 0) drawNurses()
       drawBays()
       drawActors(showHint)
       const r = SCENE.resident
       drawCharacter(ctx, r.x, r.y, r.size, 1, RESIDENT_LOOK, residentFrame(time, resident.gesture, sweatLevel()))
+      escalation.drawForeground()
       drawBubble()
       drawHud()
     },

@@ -4,6 +4,28 @@
 
 _Summary goes here at the end of the run._
 
+### Commit: Step 7c, escalation tiers and per-currency art
+- **Built:**
+  - Each currency now flies to the counter as its own art: Dollars = coins/bills/cash
+    stacks, Beats = hearts, Doses = pills/pill bottles, Sutures = thread spools. Bigger values
+    show bigger/fancier items (gold, then crystal), keeping particle counts sane.
+  - Emergency escalation (from the CLAUDE.md guide, driven by `intensityFor` = income rate):
+    - Tier 2: a tip jar beside the resident; each correct sort flicks a coin into it.
+    - Tier 3: a street window; ambulances drive past with flashing lights and the room is
+      washed in red/blue siren light.
+    - Tier 4: a helicopter crosses the window; stretchers glide along a conveyor belt.
+    - Tier 5: a river of patients streams past the window; gold bars fountain from the
+      nurse station.
+  - Every room: ambient currency rain at tier 3+ (more at higher tiers), sized to roughly a
+    second of income. Respects "reduce effects".
+- **Test:** tiers come with income. Dev preview of tier 5:
+  `setInterval(() => __rl.incomeRate.emergency = 200000, 5)` in the console.
+- **Assumptions:** thresholds `EFFECTS.intensityThresholds` and rain rates in
+  `src/data/effects.ts`; escalation layout/timings `ESCALATION` in `src/data/emergencyScene.ts`.
+  Other rooms get the shared tier effects (burst sizes, rain) but not bespoke tier props yet.
+- **Open questions:** want bespoke escalation props for Cardiology/Pharmacy/Surgery too
+  (e.g. a wall of monitors, pill conveyor, multiple ORs)?
+
 ### Commit: Step 7b, sound effects, music and a Settings panel
 - **Built:**
   - `src/ui/audio.ts`: everything synthesized with the Web Audio API (no audio files).

@@ -5,7 +5,9 @@ import { anyAffordable } from '../core/tree'
 import { bossStageReached } from '../core/trials'
 import { startLoop } from '../core/loop'
 import { DEPT_ORDER, DEPTS, type DeptId } from '../data/departments'
+import { CURRENCY_ART, EFFECTS, MONEY_ART, RAIN_PER_SECOND } from '../data/effects'
 import { ORGAN_OF, type OrganId } from '../data/trials'
+import { intensityFor } from '../core/intensity'
 import { codeBlueRun, sepsisRun } from '../trials/bossSessions'
 import { showOfflineSummary, wireCelebrations } from './celebrations'
 import { createAudio } from './audio'
@@ -88,6 +90,7 @@ export function showGameScreen(app: HTMLElement, game: Game): void {
     }
     for (const r of Object.values(rooms)) r.canvas.hidden = r !== room
     hint.textContent = DEPTS[dept].hint
+    fx.setArtStyle(CURRENCY_ART[dept])
     if (tree.isOpen()) tree.open(dept)
   }
   const tabs = createTabs(app.querySelector('.dept-tabs')!, game, switchTo)
@@ -103,6 +106,18 @@ export function showGameScreen(app: HTMLElement, game: Game): void {
   // A long pause while open (e.g. the laptop slept) pays out like offline time.
   const onOffline = (seconds: number) => showOfflineSummary(game.applyOffline(seconds))
 
+  // Ambient currency rain over the room at high intensity (from income rate).
+  let rainDue = 0
+  function ambientRain(dt: number) {
+    const tier = intensityFor(game, game.viewing)
+    rainDue += RAIN_PER_SECOND[tier - 1] * dt
+    if (rainDue < 1) return
+    const r = playArea.getBoundingClientRect()
+    // Show roughly what a second of income looks like, as one piece of art.
+    const art = MONEY_ART.find((m) => Math.max(1, game.incomeRate[game.viewing]) / EFFECTS.burstCount[tier - 1] <= m.upTo)!.art
+    for (; rainDue >= 1; rainDue--) fx.rain(r.left + Math.random() * r.width, r.top - 10, art)
+  }
+
   let bumpCooldown = 0
   startLoop(game, onOffline, (dt) => {
     const room = rooms[game.viewing]!
@@ -113,6 +128,7 @@ export function showGameScreen(app: HTMLElement, game: Game): void {
     pager.update()
     tree.draw(dt)
     trials.update(dt)
+    ambientRain(dt)
     fx.update(dt)
     bumpCooldown -= dt
   })

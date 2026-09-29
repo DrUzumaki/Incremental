@@ -67,3 +67,20 @@ export const SCENE_COLORS = {
   yellow: '#f5b83d',
   green: '#46a758',
 }
+
+// Emergency gets busier to look at as it earns more (intensity tiers from income rate).
+// Tier 2: tip jar. Tier 3: ambulances with sirens. Tier 4: helicopter + stretcher conveyor.
+// Tier 5: a river of patients past the window and gold bars fountaining.
+export const ESCALATION = {
+  window: { x: 380, y: 88, w: 232, h: 62 }, // a window onto the street
+  tipJar: { x: 140, y: 446 },
+  ambulanceEvery: 11, // TUNE: seconds between ambulances (tier 3+)
+  ambulanceSpeed: 150,
+  heliEvery: 19, // tier 4+
+  heliSpeed: 110,
+  conveyorY: 438, // stretcher conveyor along the bottom (tier 4+)
+  conveyorX: 190, // it starts after the resident's corner
+  conveyorSpeed: 55,
+  paradeSpeed: 38, // tier 5 patients streaming past the window
+  goldEvery: 0.35, // tier 5 gold bars from the nurse station
+}

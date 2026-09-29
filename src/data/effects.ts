@@ -1,5 +1,6 @@
 // Numbers for the shared effects system (particles, flying money, shake).
 // Visual only: nothing here changes how much anything earns.
+import type { DeptId } from './departments'
 
 export const EFFECTS = {
   maxParticles: 400, // hard cap on live particles (keeps 60 fps)
@@ -26,5 +27,17 @@ export const MONEY_ART: { art: MoneyArt; upTo: number }[] = [
   { art: 'bar', upTo: 100_000_000 },
   { art: 'gem', upTo: Infinity },
 ]
+
+// Each currency flies as its own kind of art.
+export type ArtStyle = 'money' | 'hearts' | 'pills' | 'thread'
+export const CURRENCY_ART: Record<DeptId, ArtStyle> = {
+  emergency: 'money',
+  cardiology: 'hearts',
+  pharmacy: 'pills',
+  surgery: 'thread',
+}
+
+// Ambient "cash rain" at high intensity: items per second by tier (1-5).
+export const RAIN_PER_SECOND = [0, 0, 1.5, 4, 9] // TUNE
 
 export const CONFETTI_COLORS = ['#e5484d', '#f5b83d', '#46a758', '#3d8bfd', '#8e6cf0', '#f28cb1']

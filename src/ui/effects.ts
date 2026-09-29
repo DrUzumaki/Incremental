@@ -1,10 +1,10 @@
 // The shared effects system: one full-screen overlay canvas with a fixed pool of
 // particles (flying money, sparks, confetti, floating text) and a screen shake.
 // Everything is in screen (CSS pixel) coordinates. Visual only.
-import { CONFETTI_COLORS, EFFECTS, MONEY_ART, type MoneyArt } from '../data/effects'
+import { CONFETTI_COLORS, EFFECTS, MONEY_ART, type ArtStyle, type MoneyArt } from '../data/effects'
 import type { Settings } from '../core/state'
 
-type Kind = 'money' | 'spark' | 'confetti' | 'text'
+type Kind = 'money' | 'spark' | 'confetti' | 'text' | 'rain'
 
 interface Particle {
   active: boolean
@@ -27,13 +27,14 @@ interface Particle {
   color: string
   text: string
   art: MoneyArt
+  style: ArtStyle
   onArrive: (() => void) | null
 }
 
 function blank(): Particle {
   return {
     active: false, kind: 'spark', age: 0, life: 1, delay: 0, x: 0, y: 0, vx: 0, vy: 0,
-    x0: 0, y0: 0, cx: 0, cy: 0, rot: 0, spin: 0, size: 1, color: '#fff', text: '', art: 'coin', onArrive: null,
+    x0: 0, y0: 0, cx: 0, cy: 0, rot: 0, spin: 0, size: 1, color: '#fff', text: '', art: 'coin', style: 'money', onArrive: null,
   }
 }
 
@@ -67,6 +68,7 @@ export function createEffects(settings: Settings) {
   let shakeTarget: HTMLElement | null = null
   let moneyTarget: () => { x: number; y: number } = () => ({ x: w / 2, y: 0 })
   let onAnyArrive: () => void = () => {}
+  let style: ArtStyle = 'money' // the current room's currency art
 
   function cap() {
     return settings.reduceEffects ? EFFECTS.reducedMaxParticles : EFFECTS.maxParticles
@@ -100,6 +102,7 @@ export function createEffects(settings: Settings) {
       p.rot = (Math.random() - 0.5) * 0.8
       p.spin = (Math.random() - 0.5) * 6
       p.art = art
+      p.style = style
       p.onArrive = onArrive ?? null
     }
   }
@@ -136,6 +139,14 @@ export function createEffects(settings: Settings) {
     Object.assign(p, { x, y, vy: -45, life: EFFECTS.textLife, text: str, color, size })
   }
 
+  // Decorative falling currency (high intensity only). Doesn't fly to the counter.
+  function rain(x: number, y: number, art: MoneyArt) {
+    if (settings.reduceEffects) return
+    const p = take('rain')
+    if (!p) return
+    Object.assign(p, { x, y, vx: (Math.random() - 0.5) * 40, vy: 60 + Math.random() * 60, life: 3, art, style, rot: Math.random() * 6, spin: (Math.random() - 0.5) * 4 })
+  }
+
   function shake(amount: number) {
     if (settings.reduceEffects) return
     shakeAmp = Math.max(shakeAmp, amount)
@@ -143,7 +154,10 @@ export function createEffects(settings: Settings) {
 
   // --- Drawing money art (flat vector, centred on 0, 0) ---
 
-  function drawArt(art: MoneyArt) {
+  function drawArt(art: MoneyArt, st: ArtStyle) {
+    if (st === 'hearts') return drawHeartArt(art)
+    if (st === 'pills') return drawPillArt(art)
+    if (st === 'thread') return drawThreadArt(art)
     switch (art) {
       case 'coin':
         ctx.fillStyle = '#f5c542'
@@ -205,6 +219,77 @@ export function createEffects(settings: Settings) {
     }
   }
 
+  // Bigger value = bigger or fancier item; 'bar' is gold and 'gem' is crystal in every style.
+  const tierColor = (art: MoneyArt, base: string) => (art === 'bar' ? '#f5c542' : art === 'gem' ? '#5fe0f0' : base)
+  const tierScale = (art: MoneyArt) => ({ coin: 0.8, bill: 1, stack: 1.25, bar: 1.4, gem: 1.5 })[art]
+
+  function drawHeartArt(art: MoneyArt) {
+    const s = tierScale(art)
+    const copies = art === 'stack' ? 3 : 1
+    for (let i = copies - 1; i >= 0; i--) {
+      ctx.save()
+      ctx.translate(i * 5, -i * 4)
+      ctx.scale(s, s)
+      ctx.fillStyle = tierColor(art, i ? '#b83a4d' : '#ff5f7a')
+      ctx.beginPath()
+      ctx.moveTo(0, 8)
+      ctx.bezierCurveTo(-13, -1, -6, -11, 0, -4)
+      ctx.bezierCurveTo(6, -11, 13, -1, 0, 8)
+      ctx.fill()
+      ctx.restore()
+    }
+    ctx.fillStyle = 'rgba(255,255,255,0.6)'
+    ctx.beginPath()
+    ctx.arc(-4 * s, -3 * s, 2 * s, 0, Math.PI * 2)
+    ctx.fill()
+  }
+
+  function drawPillArt(art: MoneyArt) {
+    const s = tierScale(art)
+    if (art === 'stack') {
+      // A little pill bottle.
+      ctx.fillStyle = '#f5a623'
+      ctx.fillRect(-7, -9, 14, 18)
+      ctx.fillStyle = '#f4f7fb'
+      ctx.fillRect(-8, -12, 16, 5)
+      ctx.fillRect(-5, -3, 10, 6)
+      return
+    }
+    ctx.save()
+    ctx.scale(s, s)
+    ctx.rotate(0.5)
+    ctx.fillStyle = tierColor(art, '#8e6cf0')
+    ctx.beginPath()
+    ctx.roundRect(-11, -5, 11, 10, [5, 0, 0, 5])
+    ctx.fill()
+    ctx.fillStyle = tierColor(art, '#f4f7fb')
+    ctx.beginPath()
+    ctx.roundRect(0, -5, 11, 10, [0, 5, 5, 0])
+    ctx.fill()
+    ctx.restore()
+  }
+
+  function drawThreadArt(art: MoneyArt) {
+    const s = tierScale(art)
+    ctx.save()
+    ctx.scale(s, s)
+    // A spool of suture thread.
+    ctx.fillStyle = '#c9a36a'
+    ctx.fillRect(-9, -10, 18, 4)
+    ctx.fillRect(-9, 6, 18, 4)
+    ctx.fillStyle = tierColor(art, '#3d8bfd')
+    ctx.fillRect(-7, -6, 14, 12)
+    ctx.strokeStyle = 'rgba(255,255,255,0.5)'
+    ctx.lineWidth = 1
+    for (let y = -4; y <= 4; y += 3) {
+      ctx.beginPath()
+      ctx.moveTo(-7, y)
+      ctx.lineTo(7, y + 1)
+      ctx.stroke()
+    }
+    ctx.restore()
+  }
+
   // --- Frame ---
 
   function update(dt: number) {
@@ -239,9 +324,17 @@ export function createEffects(settings: Settings) {
           ctx.translate(p.x, p.y)
           ctx.rotate(p.rot + p.spin * p.age)
           ctx.scale(pop, pop)
-          drawArt(p.art)
+          drawArt(p.art, p.style)
           break
         }
+        case 'rain':
+          p.x += p.vx * dt
+          p.y += p.vy * dt
+          ctx.globalAlpha = k > 0.75 ? (1 - k) * 4 : 0.85
+          ctx.translate(p.x, p.y)
+          ctx.rotate(p.rot + p.spin * p.age)
+          drawArt(p.art, p.style)
+          break
         case 'spark':
           p.vy += 500 * dt
           p.x += p.vx * dt
@@ -294,6 +387,7 @@ export function createEffects(settings: Settings) {
 
   return {
     money,
+    rain,
     sparks,
     confetti,
     text,
@@ -304,6 +398,9 @@ export function createEffects(settings: Settings) {
       moneyTarget = fn
     },
     // Runs whenever a money item lands and it has no callback of its own.
+    setArtStyle(s: ArtStyle) {
+      style = s
+    },
     setOnArrive(fn: () => void) {
       onAnyArrive = fn
     },
