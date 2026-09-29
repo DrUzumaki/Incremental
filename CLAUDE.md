@@ -177,7 +177,7 @@ tools/
 7. Balancing with the simulator, then art, sound, and polish.
 8. Playtest, then publish on itch.io.
 
-Current step: 7 (overnight run in progress on branch overnight-2026-09-28; see OVERNIGHT_LOG.md).
+Current step: 8 (playtest). Steps 2b-7 were built in the overnight run on branch overnight-2026-09-28 (not merged into main); see OVERNIGHT_LOG.md.
 (Update this line as we progress.)
 
 ## Working unattended (overnight runs)

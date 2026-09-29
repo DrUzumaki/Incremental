@@ -30,7 +30,7 @@ export function wireCelebrations(game: Game, fx: Effects) {
   // Trials already open when the game loads don't get announced again.
   const announced = new Set(DEPT_ORDER.filter((d) => game.state.depts[d].lifetime >= TRIALS.unlockAt))
   game.bus.on('milestone', ({ dept, value }) => {
-    if (value >= ECONOMY.signOff) return // the sign-off gets its own, bigger moment
+    if (value === ECONOMY.signOff) return // the sign-off gets its own, bigger moment
     const first = value === ECONOMY.milestones[0]
     const label = formatCurrency(dept, value)
     toast(first ? `First ${label} in ${DEPTS[dept].name}!` : `${label} earned in ${DEPTS[dept].name}!`, 'big')

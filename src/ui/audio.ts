@@ -53,16 +53,19 @@ export function createAudio(settings: Settings) {
     }
   })
 
+  // Sound effects and music switch on and off separately; volume covers both.
   function applySettings() {
     if (!ctx) return
-    master.gain.value = settings.sound ? settings.volume : 0
+    master.gain.value = settings.volume
+    sfxBus.gain.value = settings.sound ? AUDIO.sfxLevel : 0
     musicBus.gain.value = settings.music ? AUDIO.musicLevel : 0
+    nextBeat = ctx.currentTime + 0.1 // don't replay notes skipped while music was off
   }
 
   // --- Building blocks ---
 
   function tone(freq: number, dur: number, opts: { type?: OscillatorType; vol?: number; slide?: number; delay?: number; bus?: GainNode } = {}) {
-    if (!ctx || !settings.sound) return
+    if (!ctx || (!opts.bus && !settings.sound)) return // music notes pass their own bus
     const t = ctx.currentTime + (opts.delay ?? 0)
     const osc = ctx.createOscillator()
     const gain = ctx.createGain()
@@ -79,7 +82,7 @@ export function createAudio(settings: Settings) {
   }
 
   function hiss(dur: number, opts: { vol?: number; freq?: number; delay?: number; bus?: GainNode } = {}) {
-    if (!ctx || !settings.sound) return
+    if (!ctx || (!opts.bus && !settings.sound)) return
     const t = ctx.currentTime + (opts.delay ?? 0)
     const src = ctx.createBufferSource()
     src.buffer = noise
@@ -99,7 +102,11 @@ export function createAudio(settings: Settings) {
   // --- Music: a gentle loop, or an urgent one during trials and bosses ---
 
   function scheduleMusic() {
-    if (!ctx || !settings.music) return
+    if (!ctx) return
+    if (!settings.music) {
+      nextBeat = ctx.currentTime + 0.1 // keep the clock current so nothing piles up
+      return
+    }
     const m = MUSIC[track]
     const step = 60 / m.bpm / 2 // eighth notes
     while (nextBeat < ctx.currentTime + 0.3) {

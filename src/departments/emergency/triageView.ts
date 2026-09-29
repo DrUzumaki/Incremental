@@ -11,7 +11,7 @@ import { randomPatientLook, RESIDENT_LOOK, staffLook } from '../../ui/characters
 import { ResidentActor, StaffCrew } from '../../ui/characters/actors'
 import { patientFrame, residentFrame, type PatientMode } from '../../ui/characters/poses'
 import type { Effects } from '../../ui/effects'
-import { screenMapper, setupCanvas, type RoomView } from '../../ui/roomKit'
+import { roomKeysAllowed, screenMapper, setupCanvas, type RoomView } from '../../ui/roomKit'
 import { createEscalation } from './escalation'
 import type { TriageResult } from './triage'
 
@@ -187,7 +187,7 @@ export function mountTriageView(canvas: HTMLCanvasElement, game: Game, fx: Effec
     canvas.style.cursor = bayAt(x, y) ? 'pointer' : 'default'
   })
   window.addEventListener('keydown', (e) => {
-    if (!canvas.offsetParent || game.viewing !== 'emergency') return // room not on screen
+    if (!roomKeysAllowed(game, 'emergency', canvas, e)) return
     const bay = SCENE.bays.find((b) => b.key === e.key)
     if (bay && !e.repeat) sort(bay.severity)
   })

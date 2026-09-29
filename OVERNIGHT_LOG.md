@@ -2,7 +2,48 @@
 
 ## Run 1: 2026-09-28 (branch `overnight-2026-09-28`)
 
-_Summary goes here at the end of the run._
+**Summary.** Built everything from step 2b through step 7 on the `overnight-2026-09-28`
+branch (pushed, not merged into main):
+- Emergency now has animated characters, walking patients, visible nurses, and tip-jar →
+  ambulance → helicopter → patient-river escalation tiers.
+- Core systems: background game loop, save v2 with migration, skill trees for every room,
+  offline earnings, and a pooled effects system (flying money, particles, shake).
+- Cardiology (ECG rhythm + VF shocks), Pharmacy (compounding + risky drugs + caffeine IVs),
+  Surgery (incision tracing + robot + permanent perks).
+- Pager, cross-room exports and synergy nodes.
+- Four organ trials (Lungs, Heart, Liver, Gut), the Sepsis boss, Publications and their tree,
+  the Code Blue finale and the discharge ending.
+- Synthesized sound and music, and a Settings panel.
+- A balance simulator (`npm run simulate`) and a trial bot report (`npm run check:trials`).
+  Pacing is ~85 min for an optimal bot player, aiming at ~2 h for a person.
+
+**Where to start testing:** `npm run dev`, then play Emergency. To jump ahead, use the dev
+console shortcuts listed in each entry (`__rl` is the game).
+
+**Top open questions for you:**
+1. Resident body positioning (from before the run).
+2. The trial difficulty curve: human-like bots hit a wall around tier 5-6.
+3. Whether Code Blue should need research to beat (it currently does).
+4. Named Surgery perks vs a flat hospital-wide %.
+5. Bespoke escalation props for the later rooms.
+6. Room pacing, once you've played. Each tree's `COST_SCALE` is the knob.
+
+### Commit: Step 7e, fixes from a code review
+A review pass over the whole codebase found these (all fixed and re-tested):
+- Pager boosts froze (and kept multiplying idle income) while the tab was hidden or a trial
+  was open. Boosts now always count down; a pending page waits for you instead.
+- Offline pay (and laptop-sleep gaps) included temporary pager/IV boosts: now excluded.
+- Offline time was lost if you refreshed on the title screen (autosave had already moved the
+  "last seen" time). Autosave now starts with the shift.
+- Room keys (1/2/3, Space, Enter, R, 1-5), P and T worked during trials/bosses and pop-up
+  windows, or fired while a button had focus (e.g. Space in the Lungs trial also tapped the
+  ECG). Now blocked in those cases; T also closes the Trials panel.
+- Turning off sound effects also muted music; turning music back on played a blast of
+  skipped notes. Both fixed (sound and music are independent).
+- Milestones above 1M (10M, 100M…) had no toast/confetti. Fixed.
+- An offline payout briefly spiked the room's visual intensity. Fixed.
+- **Test:** `npm run build`, `npm run simulate`, `npm run check:trials` all pass; checked the
+  key guards in the browser.
 
 ### Commit: Step 7d, polish: unlock announcements, audio pausing, phone layout
 - **Built:**

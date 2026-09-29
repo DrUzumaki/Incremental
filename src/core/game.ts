@@ -90,15 +90,15 @@ export class Game {
 
   // Everything that multiplies a department's income: its own tree, cleared organ trials,
   // the Publications tree, patient flow exported from Emergency, synergy nodes, and pager boosts.
-  incomeMultiplier(dept: DeptId): number {
+  // `temporary` includes pager boosts and caffeine IVs (left out of offline pay).
+  incomeMultiplier(dept: DeptId, temporary = true): number {
     let m = this.stats(dept).incomeMult ?? 1
     m *= trialMult(this.state, dept)
     m *= this.stats('publications').globalIncome ?? 1
     m *= this.perkMult()
     if (dept !== 'emergency') m *= 1 + (this.stats('emergency').flowExport ?? 0)
     m *= this.synergyMult(dept)
-    m *= this.pager.boostMult(dept)
-    m *= this.buffMult(dept)
+    if (temporary) m *= this.pager.boostMult(dept) * this.buffMult(dept)
     return m
   }
 
@@ -175,8 +175,8 @@ export class Game {
     return rate * this.tempo()
   }
 
-  idleRate(dept: DeptId): number {
-    return this.rawIdleRate(dept) * this.incomeMultiplier(dept)
+  idleRate(dept: DeptId, temporary = true): number {
+    return this.rawIdleRate(dept) * this.incomeMultiplier(dept, temporary)
   }
 
   // Add money to a department. Returns the amount actually earned after multipliers.
@@ -185,7 +185,7 @@ export class Game {
     const d = this.state.depts[dept]
     d.currency += amount
     d.lifetime += amount
-    this.earnedThisTick[dept] += amount
+    if (source !== 'offline') this.earnedThisTick[dept] += amount
     this.bus.emit('earn', { dept, amount, source })
     this.checkProgress(dept)
     return amount
@@ -197,7 +197,7 @@ export class Game {
     const earned: Partial<Record<DeptId, number>> = {}
     for (const id of DEPT_ORDER) {
       if (!this.state.depts[id].unlocked) continue
-      const amount = this.idleRate(id) * paid * ECONOMY.offlineEfficiency * (this.stats('publications').offlineMult ?? 1)
+      const amount = this.idleRate(id, false) * paid * ECONOMY.offlineEfficiency * (this.stats('publications').offlineMult ?? 1)
       if (amount > 0) earned[id] = this.earn(id, amount, 'offline')
     }
     return { seconds, earned }
@@ -237,7 +237,7 @@ export class Game {
       if (raw > 0) this.earn(id, raw, 'idle')
     }
     const playing = active && !this.inTrial
-    if (playing) this.pager.update(dt)
+    this.pager.update(dt, playing)
     if (playing && this.viewing === 'emergency') this.triage.update(dt)
     if (playing && this.viewing === 'cardiology') this.ecg.update(dt)
     if (playing && this.viewing === 'pharmacy') this.pharmacy.update(dt)

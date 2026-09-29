@@ -15,11 +15,12 @@ const game = new Game(state)
 // once the player starts their shift, so any milestones it crosses get celebrated.
 const away = (Date.now() - state.lastSeen) / 1000
 
-startAutosave(state)
 // Dev-only handle for poking at the game from the browser console. Removed from builds.
 if (import.meta.env.DEV) Object.assign(window, { __rl: game })
 
 showTitleScreen(app, () => {
+  // Autosave starts with the shift, so leaving from the title screen keeps the offline time.
+  startAutosave(state)
   showGameScreen(app, game)
   if (!isNew && away >= ECONOMY.offlineMinSeconds) showOfflineSummary(game.applyOffline(away))
 })

@@ -4,6 +4,7 @@ import type { Game } from '../core/game'
 import { DEPTS, type DeptId } from '../data/departments'
 import { PAGER } from '../data/pager'
 import { toast } from './overlays'
+import { globalKeysAllowed } from './roomKit'
 
 export function createPagerUi(game: Game, goTo: (dept: DeptId) => void) {
   const el = document.createElement('div')
@@ -29,7 +30,7 @@ export function createPagerUi(game: Game, goTo: (dept: DeptId) => void) {
   }
   button.addEventListener('click', respond)
   window.addEventListener('keydown', (e) => {
-    if ((e.key === 'p' || e.key === 'P') && game.pager.page) respond()
+    if ((e.key === 'p' || e.key === 'P') && game.pager.page && globalKeysAllowed(game)) respond()
   })
 
   game.bus.on('page', (page) => {

@@ -10,7 +10,7 @@ import { drawCharacter } from '../../ui/characters/body'
 import { randomPatientLook, RESIDENT_LOOK, staffLook } from '../../ui/characters/looks'
 import { residentFrame } from '../../ui/characters/poses'
 import type { Effects } from '../../ui/effects'
-import { screenMapper, setupCanvas, type RoomView } from '../../ui/roomKit'
+import { roomKeysAllowed, screenMapper, setupCanvas, type RoomView } from '../../ui/roomKit'
 import type { EcgResult } from './ecg'
 
 const W = S.width
@@ -107,7 +107,7 @@ export function mountEcgView(canvas: HTMLCanvasElement, game: Game, fx: Effects)
 
   canvas.addEventListener('pointerdown', () => ecg.tap())
   window.addEventListener('keydown', (e) => {
-    if (e.key !== ' ' || game.viewing !== 'cardiology' || !canvas.offsetParent) return
+    if (e.key !== ' ' || !roomKeysAllowed(game, 'cardiology', canvas, e)) return
     e.preventDefault() // don't scroll the page
     if (!e.repeat) ecg.tap()
   })

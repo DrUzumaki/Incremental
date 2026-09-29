@@ -14,7 +14,7 @@ import { randomPatientLook, RESIDENT_LOOK } from '../../ui/characters/looks'
 import { patientFrame, residentFrame } from '../../ui/characters/poses'
 import type { Effects } from '../../ui/effects'
 import { toast } from '../../ui/overlays'
-import { screenMapper, setupCanvas, type RoomView } from '../../ui/roomKit'
+import { roomKeysAllowed, screenMapper, setupCanvas, type RoomView } from '../../ui/roomKit'
 import type { PharmacyResult } from './compounding'
 
 const W = S.width
@@ -112,7 +112,7 @@ export function mountCompoundingView(canvas: HTMLCanvasElement, game: Game, fx: 
     click(((e.clientX - r.left) / r.width) * W, ((e.clientY - r.top) / r.height) * H)
   })
   window.addEventListener('keydown', (e) => {
-    if (game.viewing !== 'pharmacy' || !canvas.offsetParent || e.repeat) return
+    if (e.repeat || !roomKeysAllowed(game, 'pharmacy', canvas, e)) return
     const n = Number(e.key)
     if (n >= 1 && n <= JARS.length) addPill(n - 1)
     else if (e.key === 'Enter') rx.dispense(false)

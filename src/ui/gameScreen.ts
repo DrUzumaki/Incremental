@@ -16,7 +16,7 @@ import { showDischarge } from './ending'
 import { createHud } from './hud'
 import { toast } from './overlays'
 import { createPagerUi } from './pager'
-import type { RoomView } from './roomKit'
+import { globalKeysAllowed, type RoomView } from './roomKit'
 import { ROOMS } from './rooms'
 import { createSettingsButton } from './settings'
 import { createSkillTree } from './skillTree'
@@ -100,7 +100,10 @@ export function showGameScreen(app: HTMLElement, game: Game): void {
   game.bus.on('unlock', ({ dept }) => toast(`${DEPTS[dept].name} is now open! Check the new tab.`, 'big', 6))
 
   window.addEventListener('keydown', (e) => {
-    if (e.key === 't' || e.key === 'T') tree.toggle(game.viewing)
+    if ((e.key === 't' || e.key === 'T') && globalKeysAllowed(game)) {
+      trials.close()
+      tree.toggle(game.viewing)
+    }
   })
 
   // A long pause while open (e.g. the laptop slept) pays out like offline time.

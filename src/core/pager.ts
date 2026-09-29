@@ -43,13 +43,19 @@ export class Pager {
     this.nextAt = this.time + PAGER.intervalMin + Math.random() * (PAGER.intervalMax - PAGER.intervalMin)
   }
 
-  update(dt: number) {
+  // Boosts always count down; new pages only arrive while `playing` (tab visible, no trial).
+  update(dt: number, playing: boolean) {
+    this.time += dt
+    for (let i = this.boosts.length - 1; i >= 0; i--) if (this.boosts[i].until <= this.time) this.boosts.splice(i, 1)
+    if (!playing) {
+      if (this.page) this.page.expiresAt += dt // a pending page waits for you
+      this.nextAt += dt
+      return
+    }
     const unlocked = this.host.unlocked()
     if (unlocked.length < 2) {
       this.nextAt = this.time + PAGER.firstPageAfter
     }
-    this.time += dt
-    for (let i = this.boosts.length - 1; i >= 0; i--) if (this.boosts[i].until <= this.time) this.boosts.splice(i, 1)
 
     if (this.page) {
       if (this.page.autoAt !== null && this.time >= this.page.autoAt) this.respond(true)
