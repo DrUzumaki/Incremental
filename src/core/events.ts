@@ -5,6 +5,7 @@ import type { Severity } from '../data/emergency'
 import type { EcgResult } from '../departments/cardiology/ecg'
 import type { TriageResult } from '../departments/emergency/triage'
 import type { PharmacyResult } from '../departments/pharmacy/compounding'
+import type { SurgeryResult } from '../departments/surgery/suture'
 import type { Buff } from './game'
 import type { Boost, Page } from './pager'
 
@@ -18,6 +19,7 @@ export interface GameEvents {
   triage: { result: TriageResult; patientId: number; choice?: Severity }
   ecg: EcgResult
   pharmacy: PharmacyResult
+  surgery: SurgeryResult
   buff: Buff
   page: Page
   boost: { boost: Boost; auto: boolean }

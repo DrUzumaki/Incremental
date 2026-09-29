@@ -4,18 +4,12 @@ import { CARDIOLOGY_TREE } from './cardiology'
 import { EMERGENCY_TREE } from './emergency'
 import { PHARMACY_TREE } from './pharmacy'
 import { PUBLICATIONS_TREE } from './publications'
-
-// Departments without a tree yet get a root-only placeholder.
-const placeholder = (id: TreeId): TreeDef => ({
-  id,
-  baseStats: { incomeMult: 1 },
-  nodes: [{ id: 'root', name: 'Root', desc: '', branch: 'root', x: 0, y: 0, links: [], maxLevel: 1, costs: [], effects: [], root: true }],
-})
+import { SURGERY_TREE } from './surgery'
 
 export const TREES: Record<TreeId, TreeDef> = {
   emergency: EMERGENCY_TREE,
   cardiology: CARDIOLOGY_TREE,
   pharmacy: PHARMACY_TREE,
-  surgery: placeholder('surgery'),
+  surgery: SURGERY_TREE,
   publications: PUBLICATIONS_TREE,
 }

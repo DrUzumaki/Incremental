@@ -4,6 +4,31 @@
 
 _Summary goes here at the end of the run._
 
+### Commit: Step 6b, Surgery room (trace incisions, surgical residents, robot, permanent perks)
+- **Built:**
+  - Surgery minigame: a curved dotted incision line on draped skin. Press on the pulsing green
+    circle and drag along the line to the red dot. Stray too far and you slip (lose accuracy,
+    press the circle again to resume where you left off). Pay = length x accuracy² (a perfect
+    85%+ operation pays extra; finishing early can pay more with Fast Hands). The stitched part
+    turns into a red line with cross stitches; a scalpel follows your pointer. Each operation
+    has a timer; running out breaks the combo.
+  - Idle: surgical residents (green scrubs) and later a Surgical Robot arm (300 sutures/s).
+  - Export, permanent perks: every 20 completed operations, every room earns +5% for good
+    (toast + confetti; counter shown in the room).
+  - Surgery tree (19 nodes): Technique, Special (precision/speed), Staff (residents, M&M,
+    OR coffee, robot), Perks (Case Log, Teaching Hospital), "Trauma Team" synergy
+    (Sutures + Dollars), Gut trial research.
+  - Pharmacy tree gains the "Surgical Pharmacy" synergy node (Doses + Sutures).
+  - Fixed: an incision could stop one point short of the end and never finish.
+- **Test:** opens after Pharmacy's sign-off. Dev: `__rl.state.depts.surgery.unlocked = true`.
+- **Assumptions:**
+  - Incision shape/tolerances: `SUTURE` in `src/data/surgery.ts`; numbers in
+    `src/data/trees/surgery.ts` (TUNE).
+  - Completed operations are saved (`surgeryOps`), so perks survive reloads.
+  - Perks are "every N operations, +X% to every room"; Case Log / Teaching Hospital improve them.
+- **Open questions:** should perks be named, distinct bonuses (e.g. "Faster ambulances") instead
+  of a flat hospital-wide %?
+
 ### Commit: Step 6a, Pharmacy room (compounding, risky trial drugs, dispensers, caffeine IV buffs)
 - **Built:**
   - Pharmacy minigame: a customer brings a prescription (e.g. "Yellow x2, Green x1"). Click the

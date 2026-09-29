@@ -37,6 +37,7 @@ export interface GameState {
   pubNodes: Record<string, number> // Publications tree levels
   bosses: { sepsis: BossState; codeBlue: BossState }
   discharged: boolean // reached the final stage of Code Blue
+  surgeryOps: number // completed operations (they unlock permanent perks)
   settings: Settings
   lastSeen: number // Date.now() at the last save, for offline earnings
   playTime: number // seconds played
@@ -75,6 +76,7 @@ export function createNewState(): GameState {
     pubNodes: rootLevels('publications'),
     bosses: { sepsis: { best: 0 }, codeBlue: { best: 0 } },
     discharged: false,
+    surgeryOps: 0,
     settings: { reduceEffects: reduceMotion, sound: true, music: true, volume: 0.6 },
     lastSeen: Date.now(),
     playTime: 0,

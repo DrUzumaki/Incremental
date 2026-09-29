@@ -7,6 +7,7 @@ import { TREES } from '../data/trees'
 import { Ecg } from '../departments/cardiology/ecg'
 import { Triage } from '../departments/emergency/triage'
 import { Compounding } from '../departments/pharmacy/compounding'
+import { Suture } from '../departments/surgery/suture'
 import { EventBus, type EarnSource } from './events'
 import { Pager } from './pager'
 import { trialMult } from './trials'
@@ -27,6 +28,7 @@ export class Game {
   readonly ecg: Ecg
   readonly pager: Pager
   readonly pharmacy: Compounding
+  readonly surgery: Suture
   readonly buffs: Buff[] = []
   viewing: DeptId = 'emergency' // the room on screen; only its minigame runs
   pauseWhenHidden = true // dev testing can turn this off to play in a hidden tab
@@ -65,6 +67,13 @@ export class Game {
       dept: () => this.state.depts.pharmacy,
       report: (result) => this.bus.emit('pharmacy', result),
     })
+    this.surgery = new Suture({
+      stats: () => this.stats('surgery'),
+      earn: (amount) => this.earn('surgery', amount, 'active'),
+      dept: () => this.state.depts.surgery,
+      state: () => this.state,
+      report: (result) => this.bus.emit('surgery', result),
+    })
     this.pager = new Pager({
       unlocked: () => DEPT_ORDER.filter((d) => this.state.depts[d].unlocked),
       viewing: () => this.viewing,
@@ -85,11 +94,21 @@ export class Game {
     let m = this.stats(dept).incomeMult ?? 1
     m *= trialMult(this.state, dept)
     m *= this.stats('publications').globalIncome ?? 1
+    m *= this.perkMult()
     if (dept !== 'emergency') m *= 1 + (this.stats('emergency').flowExport ?? 0)
     m *= this.synergyMult(dept)
     m *= this.pager.boostMult(dept)
     m *= this.buffMult(dept)
     return m
+  }
+
+  // Surgery's permanent perks: every N completed operations, every room earns a bit more.
+  perks(): number {
+    return Math.floor(this.state.surgeryOps / this.stats('surgery').perkEvery)
+  }
+
+  perkMult(): number {
+    return 1 + this.perks() * this.stats('surgery').perkPower
   }
 
   buffMult(dept: DeptId): number {
@@ -141,6 +160,9 @@ export class Game {
     } else if (dept === 'pharmacy') {
       const s = this.stats('pharmacy')
       rate = s.dispensers * s.dispenserRate * s.dispenserMult
+    } else {
+      const s = this.stats('surgery')
+      rate = (s.residents * s.residentRate + s.robots * s.robotRate) * s.residentMult
     }
     return rate * this.tempo()
   }
@@ -211,6 +233,7 @@ export class Game {
     if (playing && this.viewing === 'emergency') this.triage.update(dt)
     if (playing && this.viewing === 'cardiology') this.ecg.update(dt)
     if (playing && this.viewing === 'pharmacy') this.pharmacy.update(dt)
+    if (playing && this.viewing === 'surgery') this.surgery.update(dt)
     for (let i = this.buffs.length - 1; i >= 0; i--) if (this.buffs[i].until <= this.state.playTime) this.buffs.splice(i, 1)
 
     const k = Math.min(1, ECONOMY.incomeRateSmoothing * dt * 10)

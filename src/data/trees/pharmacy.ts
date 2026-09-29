@@ -73,6 +73,11 @@ export const PHARMACY_TREE: TreeDef = {
     { id: 'bulkOrdering', name: 'Bulk Ordering', desc: 'IV bag fills with 15% fewer orders', branch: 'flow',
       x: 200, y: 70, links: ['strongerIv'], maxLevel: 5, costs: D(800, 1.5), effects: [{ stat: 'buffCost', mult: 0.85 }] },
 
+    { id: 'surgicalPharmacy', name: 'Surgical Pharmacy', desc: 'Synergy: Pharmacy and Surgery both earn +10%', branch: 'synergy',
+      x: 300, y: 0, links: ['slowRelease', 'bulkOrdering'], maxLevel: 10, towards: 'surgery',
+      costs: [{ currency: 'pharmacy', base: 50_000, growth: 1.4 }, { currency: 'surgery', base: 5_000, growth: 1.4 }],
+      effects: [{ stat: 'synergy', add: 0.1 }] },
+
     // Trial research (Stem Cells)
     { id: 'hepatology', name: 'Hepatology Lab', desc: 'Liver trial comes back 10% sooner', branch: 'trial',
       x: -310, y: 0, links: ['serendipity', 'luckyCharm'], maxLevel: 5, costs: SC(10, 1.6), effects: [{ stat: 'trialCooldown', mult: 0.9 }] },
