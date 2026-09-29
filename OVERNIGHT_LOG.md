@@ -4,6 +4,28 @@
 
 _Summary goes here at the end of the run._
 
+### Commit: Step 3c, skill tree (replaces the side upgrade panel)
+- **Built:** `src/ui/skillTree.ts`, a Nodebuster-style tree opened with the "Skill tree"
+  button (or the T key). Root in the centre; branches Diagnosis (up, blue), Flow (right,
+  green), Staff (down, purple), Special (left, gold).
+  - Buying a node reveals its neighbours; unrevealed neighbours show as "?" silhouettes.
+  - Node looks: affordable = glowing pulse; too expensive = greyed; owned = filled;
+    maxed = gold ring; multi-level nodes show a progress ring and "lv/max".
+  - Drag to pan, scroll to zoom, hover for details (cost turns red if you're short), click
+    to buy (sparks, "Lv N" pop, node bounce, tiny shake). Esc or Close to exit.
+  - The tree frames what you can see when opened, so it starts small and grows.
+  - The room keeps running under the tree. The Skill tree button shows a pulsing "!" badge
+    whenever something visible is affordable.
+  - Emergency tree now has 15 nodes (the 5 original upgrades + 10 new: Pattern Recognition,
+    Resus Bonus, Differential Diagnosis, Board Certification, Bigger Waiting Room,
+    Ambulance Bay, Hire Triage Nurse, Nurse Training, Break Room Coffee, Night Float Team).
+- **Test:** Start Shift, press T (or click Skill tree), hover and buy nodes.
+- **Assumptions:**
+  - Node positions, links, costs and effects: `src/data/trees/emergency.ts`.
+  - Branch colours/icons and zoom limits: `src/data/treeStyle.ts`.
+  - Node icons are simple text glyphs (✚ » ☻ ★) for now; nicer drawn icons could come in polish.
+- **Open questions:** none.
+
 ### Commit: Step 3b, shared effects system (flying money, particles, shake)
 - **Built:** `src/ui/effects.ts`, one full-screen overlay canvas with a fixed pool of
   particles (hard cap 400): flying money, sparks, confetti, floating text, and screen shake.

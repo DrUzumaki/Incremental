@@ -3,11 +3,12 @@
 import { formatCurrency } from '../core/format'
 import type { Game } from '../core/game'
 import { resetSave } from '../core/save'
+import { anyAffordable } from '../core/tree'
 import { DEPTS } from '../data/departments'
 
 const COUNTER_SPEED = 6 // how fast the shown number catches up (higher = snappier)
 
-export function createHud(container: HTMLElement, game: Game) {
+export function createHud(container: HTMLElement, game: Game, onTree: () => void) {
   container.innerHTML = `
     <h2 class="room-name"></h2>
     <div class="counter">
@@ -15,6 +16,7 @@ export function createHud(container: HTMLElement, game: Game) {
       <div class="rate"></div>
     </div>
     <div class="topbar-actions">
+      <button class="tree-btn" type="button">Skill tree <span class="badge" hidden>!</span></button>
       <button class="effects-btn" type="button"></button>
       <button class="reset-btn" type="button">Reset save</button>
     </div>
@@ -23,6 +25,8 @@ export function createHud(container: HTMLElement, game: Game) {
   const money = container.querySelector<HTMLDivElement>('.money')!
   const rate = container.querySelector<HTMLDivElement>('.rate')!
   const effectsBtn = container.querySelector<HTMLButtonElement>('.effects-btn')!
+  const badge = container.querySelector<HTMLSpanElement>('.badge')!
+  container.querySelector('.tree-btn')!.addEventListener('click', onTree)
   container.querySelector('.reset-btn')!.addEventListener('click', () => {
     if (confirm('Erase all progress and start over?')) resetSave()
   })
@@ -59,6 +63,7 @@ export function createHud(container: HTMLElement, game: Game) {
       money.textContent = formatCurrency(dept, shown)
       const idle = game.idleRate(dept)
       rate.textContent = idle > 0 ? `+${formatCurrency(dept, idle, true)}/s idle` : ''
+      badge.hidden = !anyAffordable(game.state, dept)
       effectsBtn.textContent = game.state.settings.reduceEffects ? 'Effects: reduced' : 'Effects: full'
     },
   }

@@ -111,16 +111,7 @@ body {
 }
 
 .room-body {
-  display: grid;
-  grid-template-columns: 1fr 300px;
-  gap: 16px;
-  align-items: start;
-}
-
-@media (max-width: 800px) {
-  .room-body {
-    grid-template-columns: 1fr;
-  }
+  position: relative;
 }
 
 .triage-canvas {
@@ -244,3 +235,133 @@ body {
   color: #8ea3bf;
   cursor: pointer;
 }
+
+.tree-btn {
+  position: relative;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 700;
+  padding: 7px 14px;
+  border: none;
+  border-radius: 8px;
+  background: var(--code-blue);
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.badge {
+  position: absolute;
+  top: -7px;
+  right: -7px;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 9px;
+  background: #f5b83d;
+  color: #1b1b1b;
+  font-size: 0.75rem;
+  font-weight: 800;
+  line-height: 18px;
+  animation: badge-pulse 1s ease-in-out infinite;
+}
+
+.badge[hidden] {
+  display: none;
+}
+
+@keyframes badge-pulse {
+  50% { transform: scale(1.2); }
+}
+
+/* Skill tree overlay, covering the room while it keeps running underneath. */
+.tree-overlay {
+  position: absolute;
+  inset: 0;
+  min-height: min(80vh, 720px);
+  display: flex;
+  flex-direction: column;
+  background: rgba(11, 20, 34, 0.94);
+  border: 1px solid #2c3f5a;
+  border-radius: 12px;
+  overflow: hidden;
+  z-index: 10;
+}
+
+.tree-overlay[hidden] {
+  display: none;
+}
+
+.tree-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  padding: 10px 14px;
+  border-bottom: 1px solid #2c3f5a;
+}
+
+.tree-title {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.tree-wallet {
+  font-weight: 700;
+  color: #46a758;
+  font-variant-numeric: tabular-nums;
+}
+
+.tree-help {
+  color: #8ea3bf;
+  font-size: 0.8rem;
+}
+
+.tree-close {
+  margin-left: auto;
+  font: inherit;
+  font-size: 0.85rem;
+  padding: 6px 12px;
+  border: 1px solid #3a4d68;
+  border-radius: 8px;
+  background: transparent;
+  color: #c9d4e3;
+  cursor: pointer;
+}
+
+.tree-canvas {
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  touch-action: none;
+  cursor: grab;
+}
+
+.tree-info {
+  position: absolute;
+  max-width: 260px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #1d304b;
+  border: 1px solid #3a5580;
+  font-size: 0.85rem;
+  pointer-events: none;
+}
+
+.tree-info strong {
+  display: block;
+  font-size: 0.95rem;
+}
+
+.tree-info p {
+  margin: 6px 0;
+  color: #c9d4e3;
+}
+
+.info-branch {
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.info-cost .ok { color: #46a758; font-weight: 700; }
+.info-cost .short { color: #ff8a8a; font-weight: 700; }
+.info-cost .maxed { color: #f5d33d; font-weight: 700; }
+.info-note { font-size: 0.75rem; color: #ff5fa2 !important; }
